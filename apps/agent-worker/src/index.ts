@@ -10,14 +10,16 @@ import { fetchWeather } from './external/weather';
 
 dotenv.config();
 
+const ALLOWED_ORIGIN = process.env.CORS_ORIGIN || process.env.NEXT_PUBLIC_WORKER_URL || '*';
+
 const app = express();
-app.use(cors());
+app.use(cors({ origin: ALLOWED_ORIGIN }));
 app.use(express.json());
 
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: ALLOWED_ORIGIN,
     methods: ['GET', 'POST', 'PUT'],
   },
 });
