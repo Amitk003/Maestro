@@ -1,72 +1,99 @@
 # Maestro
 
-**Your restaurant runs itself.**
+Every restaurant runs on the same playbook: a menu, a POS, a ticket printer, and a lot of yelling. You know the story. The kitchen gets slammed, tables sit dirty, ingredients spoil, and nobody knows anything until it is too late.
 
-Maestro is a restaurant operating system that thinks ahead. While other systems just show you what is happening right now, Maestro predicts what is going to happen next - and acts before you have to.
+Maestro is not that playbook.
 
-## What makes Maestro different?
+## What Maestro does
 
-**Normal restaurant software:**
-- A menu QR code so customers can order
-- A screen in the kitchen that shows orders
-- A dashboard with yesterday's sales numbers
-- You have to figure out the rest yourself
+Maestro models your restaurant as a living digital twin. Six AI agents watch every part of your operation in real time -- tables, kitchen stations, inventory, staff, weather, local events -- and negotiate with each other to keep things running smoothly. Before a bottleneck forms, before a customer waits too long, before food goes bad, the agents act.
 
-**Maestro:**
-- Customers describe what they feel like eating - Maestro crafts the perfect meal for them
-- The kitchen gets orders routed to the right station automatically - no bottlenecks
-- Inventory knows what is going bad and suggests how to use it up
-- Staff get told what to do and when - no standing around wondering
-- The manager sees the whole restaurant as a living map with live heatmaps
+Your restaurant runs itself.
 
-## What you get
+## What that looks like
 
-**For customers**
-Tell Maestro how you feel and what you have time for. It builds a personal dining plan and tells you exactly when your food will arrive. No guessing.
+**For customers.** A guest types "25 minutes, light dinner, pre-show" into their phone. Maestro's Guest Alchemist agent reads the intent, checks kitchen load, checks ingredient freshness, and returns a perfect meal sequence -- starter, main, drink, timing. The order routes itself to the right station. No QR code menu maze. No flagging down a waiter.
 
-**For the kitchen**
-Orders show up on the right station with prep details. If one station gets busy, orders move to another station automatically. You only see what matters to you.
+**For the kitchen.** Tickets appear on the correct station with prep timers. Kitchen Conductor watches every station's load. When Grill hits 90%, it routes some items to Saute or Cold Prep automatically. Chefs see what matters, not everything.
 
-**For wait staff**
-A ranked list of what to do next. Move this table. Check on that table. Take a break when it is slow. No manager yelling across the room.
+**For wait staff.** Staff Harmony generates a ranked feed of micro-tasks: clear table 7, check on table 4, take a break in 10 minutes. One tap to execute. No manager assigning tables by intuition.
 
-**For managers and owners**
-A live map of your restaurant showing every table, every kitchen station, and every staff member. Click anything to see details. Run "what if" scenarios. Watch the AI agents negotiate in real time.
+**For managers and owners.** A live floorplan with every table color-coded by status. Station heatmaps. Real-time agent negotiation feed. A what-if simulator: "What if 40 guests show up during heavy rain?" Run it and see the agents respond before it happens. KPI trend charts for turnover, bottleneck, waste, guest delight, staff energy.
 
-## Tech stack
+**For your bottom line.** Less waste. Faster tables. Happier guests. Staff that do not burn out.
+
+## How it works
+
+```
+Customer types "25 min, light pre-show dinner"
+       |
+       v
+Guest Alchemist parses intent
+  -> checks kitchen load
+  -> checks ingredient freshness
+  -> returns personalized sequence
+       |
+       v
+Kitchen Conductor routes order to correct station
+       |
+       v
+Staff Harmony generates micro-tasks for service
+       |
+       v
+Inventory Guardian watches for spoilage
+       |
+       v
+Demand Seer adjusts forecasts based on weather + events
+       |
+       v
+Orchestrator scores and resolves all proposals
+       |
+       v
+Everything updates in real time via Socket.io
+```
+
+## What makes it different
+
+Normal restaurant systems are reactive. A ticket prints, someone yells, you deal with it. Maestro is proactive. The agents do not wait for problems. They detect them forming and act -- rerouting orders, promoting soon-to-expire ingredients, adjusting staffing, sending recovery perks to unhappy guests.
+
+It works without AI too. Every agent has a heuristic fallback engine. If Gemini is down, the rules engine takes over. Your restaurant never stops running.
+
+## Tech
 
 | Part | What we use |
 |------|-------------|
-| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS |
+| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS v4, Framer Motion |
 | Real-time | Socket.io |
-| AI | Google Gemini (for reasoning + fast classification) |
+| AI reasoning | Google Gemini (with heuristic fallback) |
 | Database | PostgreSQL (via Supabase) |
-| Cache | Redis |
 | Agent runtime | Dedicated Node.js worker |
+| State store | Zustand (client), In-memory + Redis (server) |
 
 ## Quick start
 
 ```bash
 npm install
 cp .env.example .env
-# Fill in your API keys in .env
+# Fill in your Supabase credentials and API keys
 npm run dev
 ```
 
-Frontend runs on http://localhost:3000.
-Agent worker runs on http://localhost:3001.
+Frontend: http://localhost:3000
+Agent worker: http://localhost:3001
 
 ## Project structure
 
 ```
 apps/
-  web/           # Customer, staff, and manager interfaces
-  agent-worker/  # AI agents and digital twin engine
+  web/             # Customer, staff, and manager interfaces
+  agent-worker/    # AI agents and digital twin engine
 packages/
-  shared/        # Shared types, validation schemas, constants
-docs/            # Documentation
+  shared/          # Shared types, Zod schemas, constants
+docs/              # Setup and architecture documentation
 ```
 
-## Documentation
+## Learn more
 
-See the [docs](docs/) folder for setup guides, architecture details, and agent descriptions.
+See [docs/](docs/) for setup guides, architecture details, and agent descriptions.
+
+Maestro is in active development. Production deployment instructions are in the setup guide.

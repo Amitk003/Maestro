@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useTwinStore } from '../../../lib/store/useTwinStore';
+import { PageTransition } from '../../../components/ui/PageTransition';
+import { ErrorBoundary } from '../../../components/ui/ErrorBoundary';
 
 interface QueueOrderItem {
   id: string;
@@ -100,6 +102,8 @@ export default function KitchenKDSPage() {
     : queue.filter((o) => o.order_items.some((i) => i.station_id === filterStation));
 
   return (
+    <ErrorBoundary>
+    <PageTransition>
     <div className="min-h-screen bg-zinc-950 text-white p-6 font-sans">
       <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
         <div>
@@ -217,5 +221,7 @@ export default function KitchenKDSPage() {
         })}
       </div>
     </div>
+    </PageTransition>
+    </ErrorBoundary>
   );
 }

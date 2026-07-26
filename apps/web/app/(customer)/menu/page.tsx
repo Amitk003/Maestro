@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTwinStore } from '../../../lib/store/useTwinStore';
+import { PageTransition } from '../../../components/ui/PageTransition';
+import { ErrorBoundary } from '../../../components/ui/ErrorBoundary';
 
 interface MenuItem {
   id: string;
@@ -119,6 +121,8 @@ export default function CustomerMenuPage() {
   const displayItems = menuItems.length > 0 ? menuItems : state?.menuItems || [];
 
   return (
+    <ErrorBoundary>
+    <PageTransition>
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 font-sans">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
@@ -259,5 +263,7 @@ export default function CustomerMenuPage() {
         </div>
       </div>
     </div>
+    </PageTransition>
+    </ErrorBoundary>
   );
 }

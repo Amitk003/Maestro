@@ -5,6 +5,9 @@ import { useTwinStore } from '../../../lib/store/useTwinStore';
 import { FloorplanVisualizer } from '../../../components/twin/FloorplanVisualizer';
 import { AgentFeed } from '../../../components/agents/AgentFeed';
 import { MiniTrendChart } from '../../../components/ui/MiniTrendChart';
+import { PageTransition } from '../../../components/ui/PageTransition';
+import { ErrorBoundary } from '../../../components/ui/ErrorBoundary';
+import { KPISkeleton } from '../../../components/ui/Skeleton';
 import Link from 'next/link';
 
 const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:3001';
@@ -62,7 +65,11 @@ export default function ManagerDashboardPage() {
   const chartData = (key: 'table_turnover_min' | 'kitchen_bottleneck_pct' | 'guest_delight_score' | 'waste_prevented_kg' | 'staff_energy_avg') =>
     metricHistory.map((m) => ({ timestamp: m.timestamp, value: m[key] }));
 
+  const isLoading = !state;
+
   return (
+    <ErrorBoundary>
+    <PageTransition>
     <div className="min-h-screen bg-zinc-950 text-white p-6 font-sans">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
@@ -82,6 +89,9 @@ export default function ManagerDashboardPage() {
         </div>
 
         {/* KPI Cards with Trend Charts */}
+        {isLoading ? (
+          <KPISkeleton />
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
             <div className="text-xs text-zinc-400 font-mono">Table Turnover</div>
@@ -119,6 +129,7 @@ export default function ManagerDashboardPage() {
             <MiniTrendChart data={chartData('staff_energy_avg')} color="#60a5fa" />
           </div>
         </div>
+        )}
 
         {/* Main Grid: Floorplan + Agent Feed / Orders */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
@@ -250,5 +261,7 @@ export default function ManagerDashboardPage() {
         </div>
       </div>
     </div>
+    </PageTransition>
+    </ErrorBoundary>
   );
 }
