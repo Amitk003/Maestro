@@ -1,0 +1,149 @@
+# Data Models
+
+This document describes all the database tables and what they store.
+
+## Users and Roles
+
+### profiles
+
+Stores user accounts and their role in the restaurant.
+
+| Column | Type | What it is |
+|--------|------|------------|
+| id | UUID | Unique ID |
+| email | text | Email address |
+| name | text | Display name |
+| role | text | One of: customer, waiter, chef, manager, owner |
+| restaurant_id | UUID | Which restaurant they belong to |
+| created_at | timestamp | When they joined |
+
+### roles
+
+Each role has different permissions:
+- **customer**: Can see menu, place orders, track their order
+- **waiter**: Can see tasks, update table status, serve orders
+- **chef**: Can see KDS, update order prep status
+- **manager**: Can see all data, adjust settings, run simulations
+- **owner**: Same as manager but can also manage staff
+
+## Restaurant
+
+### restaurants
+
+| Column | Type | What it is |
+|--------|------|------------|
+| id | UUID | Unique ID |
+| name | text | Restaurant name |
+| address | text | Street address |
+| timezone | text | Timezone like America/New_York |
+| config | jsonb | Extra settings |
+
+## Tables and Floorplan
+
+### tables
+
+| Column | Type | What it is |
+|--------|------|------------|
+| id | UUID | Unique ID |
+| restaurant_id | UUID | Which restaurant |
+| zone | text | Patio, Main, Bar, Private |
+| capacity | integer | How many people fit |
+| status | text | vacant, seated, ordering, waiting_food, eating, payment, dirty |
+| position_x | integer | X position on the floorplan |
+| position_y | integer | Y position on the floorplan |
+| assigned_waiter_id | UUID | Who is serving this table |
+| active_session_id | UUID | Current dining session |
+
+### kitchen_stations
+
+| Column | Type | What it is |
+|--------|------|------------|
+| id | UUID | Unique ID |
+| restaurant_id | UUID | Which restaurant |
+| name | text | Grill, Saute, Cold Prep, Pastry |
+| max_capacity | integer | Max orders at once |
+| current_queue_depth | integer | How many orders waiting |
+| heat_index | integer | 0-100 how busy it is |
+| assigned_staff_ids | UUID[] | Which chefs work here |
+
+## Menu
+
+### menu_items
+
+| Column | Type | What it is |
+|--------|------|------------|
+| id | UUID | Unique ID |
+| restaurant_id | UUID | Which restaurant |
+| name | text | Dish name |
+| description | text | What is in the dish |
+| price | decimal | Price in dollars |
+| category | text | Starter, Main, Dessert, Drink |
+| base_prep_minutes | integer | Normal prep time |
+| ingredients | jsonb | List of ingredient IDs and amounts |
+| station_requirements | jsonb | Which stations can make this |
+| available | boolean | Can customers order this |
+| image_url | text | Picture of the dish |
+
+## Inventory
+
+### ingredients
+
+| Column | Type | What it is |
+|--------|------|------------|
+| id | UUID | Unique ID |
+| restaurant_id | UUID | Which restaurant |
+| name | text | Ingredient name |
+| quantity | decimal | How much we have |
+| unit | text | kg, liters, pieces |
+| shelf_life_hours | integer | How long it stays fresh |
+| harvested_at | timestamp | When we got it |
+| freshness_pct | integer | 0-100 how fresh |
+| storage_temp | decimal | Storage temperature |
+| predicted_spoilage_at | timestamp | When it will go bad |
+
+## Orders
+
+### orders
+
+| Column | Type | What it is |
+|--------|------|------------|
+| id | UUID | Unique ID |
+| restaurant_id | UUID | Which restaurant |
+| table_id | UUID | Which table |
+| customer_id | UUID | Who ordered |
+| status | text | pending, in_prep, ready, served, billed, closed |
+| type | text | dine_in, takeaway |
+| notes | text | Special instructions |
+| created_at | timestamp | When ordered |
+| updated_at | timestamp | Last update |
+
+### order_items
+
+| Column | Type | What it is |
+|--------|------|------------|
+| id | UUID | Unique ID |
+| order_id | UUID | Which order |
+| menu_item_id | UUID | Which dish |
+| quantity | integer | How many |
+| modifiers | jsonb | Customizations |
+| station_id | UUID | Which station makes it |
+| status | text | pending, in_prep, completed |
+| prep_started_at | timestamp | When cooking started |
+| prep_completed_at | timestamp | When cooking finished |
+
+## Agent Logs
+
+### agent_logs
+
+Stores every action the agents take. Used for the activity feed and debugging.
+
+| Column | Type | What it is |
+|--------|------|------------|
+| id | UUID | Unique ID |
+| agent_name | text | Which agent |
+| action_type | text | propose_menu_change, reroute_order, assign_task, etc |
+| target_entity | text | What was changed (menu item, table, order) |
+| proposal | jsonb | The full proposal details |
+| utility_score | decimal | How much this helped the global score |
+| status | text | proposed, accepted, overridden |
+| created_at | timestamp | When it happened |
