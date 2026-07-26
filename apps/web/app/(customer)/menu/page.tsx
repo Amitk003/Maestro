@@ -15,6 +15,33 @@ interface MenuItem {
   station_requirements: string[];
 }
 
+function computeAvailability(item: MenuItem, state: { stations: { id: string; heat_index: number; current_queue_depth: number; max_capacity: number }[]; ingredients: { id: string; freshness_pct: number }[]; menuItems: MenuItem[] } | null): { score: number; label: string; color: string } {
+  if (!state) return { score: 85, label: 'Estimated Available', color: 'text-emerald-400' };
+
+  let score = 100;
+
+  // Station load penalty
+  for (const stationId of item.station_requirements) {
+    const station = state.stations.find((s) => s.id === stationId);
+    if (station) {
+      const loadRatio = station.current_queue_depth / Math.max(station.max_capacity, 1);
+      score -= loadRatio * 30;
+      if (station.heat_index > 80) score -= 15;
+    }
+  }
+
+  // Prep time penalty (longer prep = more risk)
+  score -= Math.min(15, item.base_prep_minutes * 0.5);
+
+  // Spoilage boost (fresh ingredients being promoted)
+  if (item.spoilage_priority_boost > 0) score += 10;
+
+  const clamped = Math.max(20, Math.min(100, Math.round(score)));
+  if (clamped >= 80) return { score: clamped, label: 'High Availability', color: 'text-emerald-400' };
+  if (clamped >= 50) return { score: clamped, label: 'Moderate Availability', color: 'text-amber-400' };
+  return { score: clamped, label: 'Limited Stock', color: 'text-rose-400' };
+}
+
 export default function CustomerMenuPage() {
   const { state, initSocket } = useTwinStore();
   const [intentInput, setIntentInput] = useState('');
@@ -66,7 +93,6 @@ export default function CustomerMenuPage() {
         setOrderId(data.order.id);
       }
     } catch {
-      // fallback - order created locally only
       setOrderId('pending_local');
     } finally {
       setSubmitting(false);
@@ -146,7 +172,6 @@ export default function CustomerMenuPage() {
               </span>
               <span className="text-xs text-zinc-400 font-mono">{createdSequence.tableTime as string}</span>
             </div>
-
             <div className="space-y-3 text-sm">
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-4">
                 <div className="text-[11px] text-purple-400 font-bold uppercase tracking-wider">Starter Pairing</div>
@@ -159,7 +184,6 @@ export default function CustomerMenuPage() {
                 <div className="text-xs text-zinc-400 mt-0.5">Station: {(createdSequence.main as Record<string, string>).station} | Est: {(createdSequence.main as Record<string, string>).timing}</div>
               </div>
             </div>
-
             <button
               onClick={handleSubmitOrder}
               disabled={submitting}
@@ -188,26 +212,32 @@ export default function CustomerMenuPage() {
         <div>
           <h2 className="text-xl font-bold mb-4">Live Dynamic Menu</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {displayItems.map((item: MenuItem) => (
-              <div key={item.id} className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 backdrop-blur-sm">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-bold text-white text-base">{item.name}</h3>
-                  <span className="text-sm font-semibold text-emerald-400 font-mono">${item.price}</span>
+            {displayItems.map((item: MenuItem) => {
+              const avail = computeAvailability(item, state ? { stations: state.stations, ingredients: state.ingredients, menuItems: state.menuItems } : null);
+              return (
+                <div key={item.id} className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 backdrop-blur-sm">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2 w-2 rounded-full ${avail.color.replace('text-', 'bg-')}`}></span>
+                      <h3 className="font-bold text-white text-base">{item.name}</h3>
+                    </div>
+                    <span className="text-sm font-semibold text-emerald-400 font-mono">${item.price}</span>
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">{item.description}</p>
+                  <div className="mt-4 flex justify-between items-center text-[11px] font-mono">
+                    <span className={`text-zinc-500`}>Avail: <span className={avail.color}>{avail.score}%</span></span>
+                    {item.spoilage_priority_boost > 0 && (
+                      <span className="text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 flex items-center gap-1">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                        <span>Chef Feature (+{item.spoilage_priority_boost}% Fresh Boost)</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">{item.description}</p>
-                <div className="mt-4 flex justify-between items-center text-[11px] font-mono">
-                  <span className="text-zinc-500">Base Prep: {item.base_prep_minutes}m</span>
-                  {item.spoilage_priority_boost > 0 && (
-                    <span className="text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20 flex items-center gap-1">
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                      </svg>
-                      <span>Chef Feature (+{item.spoilage_priority_boost}% Fresh Boost)</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
