@@ -121,7 +121,7 @@ let lastWeatherFetch = 0;
 // Continuous Digital Twin Event Loop (Every 5 seconds)
 const TICK_INTERVAL_MS = 5000;
 setInterval(async () => {
-  const { state: updatedState, newLogs, newTasks } = twinEngine.tick();
+  const { state: updatedState, newLogs, newTasks } = await twinEngine.tick();
 
   // Fetch real weather periodically
   if (Date.now() - lastWeatherFetch > WEATHER_INTERVAL_MS) {

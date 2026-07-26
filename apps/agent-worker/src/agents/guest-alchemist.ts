@@ -1,11 +1,13 @@
-import type { TwinState, AgentLog } from '@maestro/shared';
+import type { TwinState, AgentLog, AgentName } from '@maestro/shared';
+import { callGemini, extractJSONArray } from '../llm/gemini';
+import { SYSTEM_PROMPTS, buildAgentStatePrompt } from '../llm/prompts';
+import type { LLMProposal } from '../llm/types';
 
-export function propose(_state: TwinState): AgentLog[] {
+function heuristicPropose(state: TwinState): AgentLog[] {
   const logs: AgentLog[] = [];
   const timestamp = new Date().toISOString();
 
-  // Heuristic: suggest recovery perks for long-wait tables
-  const longWaitOrders = _state.activeOrders.filter(
+  const longWaitOrders = state.activeOrders.filter(
     (o) => o.status === 'in_prep' && Date.now() - new Date(o.created_at).getTime() > 15 * 60 * 1000
   );
   if (longWaitOrders.length > 0) {
@@ -25,8 +27,7 @@ export function propose(_state: TwinState): AgentLog[] {
     });
   }
 
-  // Heuristic: suggest menu morphing recommendations based on weather
-  if (_state.weather.condition === 'rainy' || _state.weather.condition === 'cold') {
+  if (state.weather.condition === 'rainy' || state.weather.condition === 'cold') {
     logs.push({
       id: `GA_WEATHER_${Date.now()}`,
       agent_name: 'guest_alchemist',
@@ -34,7 +35,7 @@ export function propose(_state: TwinState): AgentLog[] {
       target_entity: 'RESTAURANT_GLOBAL',
       proposal: {
         action: 'Promote comfort food and warm dishes',
-        reason: `${_state.weather.condition} weather increases comfort food demand by estimated 22%`,
+        reason: `${state.weather.condition} weather increases comfort food demand by estimated 22%`,
         suggested_boost: 'Mushroom Risotto + Risotto',
       },
       utility_score: 7.8,
@@ -44,4 +45,33 @@ export function propose(_state: TwinState): AgentLog[] {
   }
 
   return logs;
+}
+
+function llmProposalsToLogs(proposals: LLMProposal[], agentName: AgentName): AgentLog[] {
+  const timestamp = new Date().toISOString();
+  return proposals.map((p, i) => ({
+    id: `${agentName}_LLM_${Date.now()}_${i}`,
+    agent_name: agentName,
+    action_type: p.action_type,
+    target_entity: p.target_entity,
+    proposal: p.proposal,
+    utility_score: p.utility_score,
+    status: 'proposed' as const,
+    created_at: timestamp,
+  }));
+}
+
+export async function propose(state: TwinState): Promise<AgentLog[]> {
+  try {
+    const text = await callGemini(SYSTEM_PROMPTS.guest_alchemist, buildAgentStatePrompt('guest_alchemist', state));
+    if (text) {
+      const parsed = extractJSONArray(text);
+      if (parsed) {
+        return llmProposalsToLogs(parsed as LLMProposal[], 'guest_alchemist');
+      }
+    }
+  } catch {
+    // fall through to heuristic
+  }
+  return heuristicPropose(state);
 }

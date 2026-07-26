@@ -63,17 +63,15 @@ export class DigitalTwinEngine {
     }
   }
 
-  public tick(): { state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[] } {
+  public async tick(): Promise<{ state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[] }> {
     this.state.timestamp = new Date().toISOString();
     this.tickCount++;
 
-    // 1. Decay ingredients freshness slightly
     this.state.ingredients = this.state.ingredients.map((ing) => {
       const freshness_pct = Math.max(0, ing.freshness_pct - 0.2);
       return { ...ing, freshness_pct };
     });
 
-    // 2. Adjust station heat indices based on active order load
     this.state.stations = this.state.stations.map((st) => {
       const stationOrders = this.state.activeOrders.filter((o) =>
         o.items.some((i) => i.station_id === st.id && i.status === 'in_prep')
@@ -82,7 +80,6 @@ export class DigitalTwinEngine {
       return { ...st, heat_index, current_queue_depth: Math.max(st.current_queue_depth, stationOrders) };
     });
 
-    // 3. Dynamic metric fluctuations
     this.state.metrics.waste_prevented_kg = parseFloat(
       (this.state.metrics.waste_prevented_kg + 0.05).toFixed(2)
     );
@@ -91,7 +88,6 @@ export class DigitalTwinEngine {
 
     this.recordMetrics();
 
-    // 4. Run agent proposals every 3 ticks (15s) to avoid flooding logs
     if (this.tickCount % 3 === 0) {
       return this.runAgentCycle();
     }
@@ -103,7 +99,6 @@ export class DigitalTwinEngine {
     const before = this.metricHistory[this.metricHistory.length - 1] || this.getSnapshot();
     const simState = JSON.parse(JSON.stringify(this.state)) as TwinState;
 
-    // Apply perturbation
     switch (scenario) {
       case 'rain_surge':
         simState.weather = { condition: 'rainy', temp_celsius: 8, description: 'Sudden heavy rain' };
@@ -122,7 +117,6 @@ export class DigitalTwinEngine {
         break;
     }
 
-    // Run simulation ticks
     for (let i = 0; i < ticks; i++) {
       simState.ingredients = simState.ingredients.map((ing) => ({
         ...ing, freshness_pct: Math.max(0, ing.freshness_pct - 0.5),
@@ -189,21 +183,25 @@ export class DigitalTwinEngine {
     };
   }
 
-  private runAgentCycle(): { state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[] } {
+  private async runAgentCycle(): Promise<{ state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[] }> {
+    const [guestLogs, kitchenLogs, inventoryLogs, demandLogs, staffResult] = await Promise.all([
+      guestAlchemistPropose(this.state).catch(() => [] as AgentLog[]),
+      kitchenConductorPropose(this.state).catch(() => [] as AgentLog[]),
+      inventoryGuardianPropose(this.state).catch(() => [] as AgentLog[]),
+      demandSeerPropose(this.state).catch(() => [] as AgentLog[]),
+      staffHarmonyPropose(this.state).catch(() => ({ logs: [] as AgentLog[], tasks: [] as StaffTask[] })),
+    ]);
+
     const allProposals: AgentLog[] = [
-      ...guestAlchemistPropose(this.state),
-      ...kitchenConductorPropose(this.state),
-      ...inventoryGuardianPropose(this.state),
-      ...demandSeerPropose(this.state),
+      ...guestLogs,
+      ...kitchenLogs,
+      ...inventoryLogs,
+      ...demandLogs,
+      ...staffResult.logs,
     ];
 
-    const staffResult = staffHarmonyPropose(this.state);
-    allProposals.push(...staffResult.logs);
+    const resolvedLogs = await orchestratorResolve(allProposals, this.state);
 
-    // Orchestrator resolves conflicts
-    const resolvedLogs = orchestratorResolve(allProposals);
-
-    // Apply accepted proposals to state
     for (const log of resolvedLogs) {
       if (log.status === 'accepted') {
         if (log.agent_name === 'inventory_guardian' && log.action_type === 'spoilage_salvage') {
@@ -228,7 +226,6 @@ export class DigitalTwinEngine {
     this.crisisPhase = 0;
     const timestamp = new Date().toISOString();
 
-    // Phase 0: Environment degrades
     this.state.weather = {
       condition: 'stormy',
       temp_celsius: 9,
@@ -260,7 +257,6 @@ export class DigitalTwinEngine {
     const phase = this.crisisPhase;
 
     if (phase === 1) {
-      // Phase 1: Agents detect and propose
       const grill = this.state.stations.find((s) => s.id === 'ST_GRILL');
       if (grill) { grill.heat_index = 94; grill.current_queue_depth = 12; }
       const sal = this.state.ingredients.find((i) => i.id === 'ING_SALMON');
@@ -293,7 +289,6 @@ export class DigitalTwinEngine {
     }
 
     if (phase === 2) {
-      // Phase 2: Orchestrator resolves
       const log3: AgentLog = {
         id: `CRISIS_P2_${Date.now()}`,
         agent_name: 'maestro_orchestrator',
@@ -309,7 +304,6 @@ export class DigitalTwinEngine {
       };
       this.state.agentLogs = [log3, ...this.state.agentLogs];
 
-      // Apply orchestrator actions
       this.state.menuItems = this.state.menuItems.map((m) =>
         m.name.includes('Salmon Tartare') ? { ...m, spoilage_priority_boost: 30 } : m
       );
@@ -330,7 +324,6 @@ export class DigitalTwinEngine {
     }
 
     if (phase === 3) {
-      // Phase 3: Recovery - global score recovers
       const grill = this.state.stations.find((s) => s.id === 'ST_GRILL');
       if (grill) { grill.heat_index = 55; grill.current_queue_depth = 4; }
       this.state.metrics.kitchen_bottleneck_pct = 38;

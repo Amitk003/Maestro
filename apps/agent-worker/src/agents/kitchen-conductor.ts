@@ -1,12 +1,15 @@
-import type { TwinState, AgentLog } from '@maestro/shared';
+import type { TwinState, AgentLog, AgentName } from '@maestro/shared';
+import { callGemini, extractJSONArray } from '../llm/gemini';
+import { SYSTEM_PROMPTS, buildAgentStatePrompt } from '../llm/prompts';
+import type { LLMProposal } from '../llm/types';
 
-export function propose(_state: TwinState): AgentLog[] {
+function heuristicPropose(state: TwinState): AgentLog[] {
   const logs: AgentLog[] = [];
   const timestamp = new Date().toISOString();
 
-  const overloadedStations = _state.stations.filter((s) => s.heat_index > 80);
+  const overloadedStations = state.stations.filter((s) => s.heat_index > 80);
   for (const station of overloadedStations) {
-    const viableTargets = _state.stations.filter(
+    const viableTargets = state.stations.filter(
       (s) => s.id !== station.id && s.heat_index < 60
     );
     if (viableTargets.length > 0) {
@@ -31,4 +34,33 @@ export function propose(_state: TwinState): AgentLog[] {
   }
 
   return logs;
+}
+
+function llmProposalsToLogs(proposals: LLMProposal[], agentName: AgentName): AgentLog[] {
+  const timestamp = new Date().toISOString();
+  return proposals.map((p, i) => ({
+    id: `${agentName}_LLM_${Date.now()}_${i}`,
+    agent_name: agentName,
+    action_type: p.action_type,
+    target_entity: p.target_entity,
+    proposal: p.proposal,
+    utility_score: p.utility_score,
+    status: 'proposed' as const,
+    created_at: timestamp,
+  }));
+}
+
+export async function propose(state: TwinState): Promise<AgentLog[]> {
+  try {
+    const text = await callGemini(SYSTEM_PROMPTS.kitchen_conductor, buildAgentStatePrompt('kitchen_conductor', state));
+    if (text) {
+      const parsed = extractJSONArray(text);
+      if (parsed) {
+        return llmProposalsToLogs(parsed as LLMProposal[], 'kitchen_conductor');
+      }
+    }
+  } catch {
+    // fall through to heuristic
+  }
+  return heuristicPropose(state);
 }
