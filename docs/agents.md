@@ -80,7 +80,7 @@ Maestro uses six AI agents. Each agent watches one part of the restaurant and pr
 **Job**: The boss agent. It listens to all the other agents and makes final decisions.
 
 **What it does**:
-- Collects proposals from all agents every 5 seconds
+- Collects proposals from all agents every 15 seconds (3 engine ticks)
 - Scores each proposal against the global goal (happy customers + fast kitchen + low waste + happy staff + profit)
 - Resolves fights between agents (for example: Kitchen Conductor says no more grill orders, but Guest Alchemist wants to recommend a grilled dish)
 - Approves or rejects proposals
@@ -98,10 +98,10 @@ The system tries AI first. If that fails (API down, timeout, rate limit), it fal
 ## The agent loop
 
 ```
-Every 5 seconds:
-  1. Digital twin advances time
-  2. Each agent looks at the twin state
-  3. Each agent proposes actions
+Every tick (5 seconds):
+  1. Digital twin advances time (ingredient decay, order progression)
+  2. Twin state snapshot is broadcast via WebSocket
+  3. Every 3rd tick: each agent looks at the twin state and proposes actions
   4. Orchestrator collects and scores all proposals
   5. Orchestrator picks the best actions
   6. Actions are applied to the twin

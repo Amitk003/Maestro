@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useTwinStore } from '../../../lib/store/useTwinStore';
 import type { StaffTask } from '@maestro/shared';
+import { PageTransition } from '../../../components/ui/PageTransition';
+import { ErrorBoundary } from '../../../components/ui/ErrorBoundary';
 
 export default function StaffTasksPage() {
   const { state, initSocket, resolveTask } = useTwinStore();
@@ -63,6 +65,8 @@ export default function StaffTasksPage() {
   const displayTasks = tasks.length > 0 ? tasks : twinTasks;
 
   return (
+    <ErrorBoundary>
+    <PageTransition>
     <div className="min-h-screen bg-zinc-950 text-white p-6 font-sans">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
@@ -142,5 +146,7 @@ export default function StaffTasksPage() {
         </div>
       </div>
     </div>
+    </PageTransition>
+    </ErrorBoundary>
   );
 }

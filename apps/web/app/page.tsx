@@ -2,7 +2,10 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { useTwinStore } from '../lib/store/useTwinStore';
+import { PageTransition } from '../components/ui/PageTransition';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 
 export default function Home() {
   const { state, isConnected, isCrisisActive, initSocket, triggerCrisis } = useTwinStore();
@@ -12,6 +15,8 @@ export default function Home() {
   }, [initSocket]);
 
   return (
+    <ErrorBoundary>
+    <PageTransition>
     <div className="flex min-h-screen flex-col bg-zinc-950 text-zinc-100 selection:bg-rose-500 selection:text-white relative overflow-hidden font-sans">
       {/* Subtle Ambient Radial Glows */}
       <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-rose-600/10 blur-[140px]" />
@@ -110,10 +115,18 @@ export default function Home() {
         </div>
 
         {/* Feature Role Cards with Custom Styled Inline SVGs */}
-        <div className="mt-20 grid w-full grid-cols-1 md:grid-cols-3 gap-6 text-left">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
+          className="mt-20 grid w-full grid-cols-1 md:grid-cols-3 gap-6 text-left"
+        >
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          >
           <Link
             href="/customer/menu"
-            className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 hover:border-purple-500/40 hover:bg-zinc-900/80 backdrop-blur-sm transition-all duration-300 shadow-lg"
+            className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 hover:border-purple-500/40 hover:bg-zinc-900/80 backdrop-blur-sm transition-all duration-300 shadow-lg block"
           >
             <div className="h-11 w-11 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-purple-500/20 transition-all">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -125,10 +138,14 @@ export default function Home() {
               Describe mood, timing constraints, or dietary needs. AI crafts a personalized dining sequence with transparent wait progress.
             </p>
           </Link>
+          </motion.div>
 
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          >
           <Link
             href="/staff/tasks"
-            className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 hover:border-amber-500/40 hover:bg-zinc-900/80 backdrop-blur-sm transition-all duration-300 shadow-lg"
+            className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 hover:border-amber-500/40 hover:bg-zinc-900/80 backdrop-blur-sm transition-all duration-300 shadow-lg block"
           >
             <div className="h-11 w-11 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-amber-500/20 transition-all">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,10 +157,14 @@ export default function Home() {
               Ranked proactive micro-tasks for waiters and chefs with 1-tap execution. Fatigue-aware shift scheduling and coordination.
             </p>
           </Link>
+          </motion.div>
 
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+          >
           <Link
             href="/manager/dashboard"
-            className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 hover:border-rose-500/40 hover:bg-zinc-900/80 backdrop-blur-sm transition-all duration-300 shadow-lg"
+            className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 hover:border-rose-500/40 hover:bg-zinc-900/80 backdrop-blur-sm transition-all duration-300 shadow-lg block"
           >
             <div className="h-11 w-11 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-rose-500/20 transition-all">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -155,8 +176,11 @@ export default function Home() {
               Live 2D floorplan heatmaps, real-time agent negotiation logs, and continuous what-if scenario simulator engine.
             </p>
           </Link>
-        </div>
+          </motion.div>
+        </motion.div>
       </main>
     </div>
+    </PageTransition>
+    </ErrorBoundary>
   );
 }

@@ -32,11 +32,11 @@ Open `.env` and fill in the values:
 
 | Variable | What it is |
 |----------|------------|
-| DATABASE_URL | Your PostgreSQL connection string |
-| GEMINI_API_KEY | Your Google Gemini API key |
-| NEXTAUTH_SECRET | A random string for session encryption |
 | NEXT_PUBLIC_SUPABASE_URL | Your Supabase project URL |
 | NEXT_PUBLIC_SUPABASE_ANON_KEY | Your Supabase anonymous key |
+| SUPABASE_SERVICE_ROLE_KEY | Your Supabase service role key |
+| GEMINI_API_KEY | Your Google Gemini API key |
+| WEATHER_API_KEY | Your OpenWeatherMap API key |
 
 ### 3. Set up the database (Supabase)
 
@@ -71,12 +71,12 @@ This starts both:
 - The Next.js frontend at http://localhost:3000
 - The agent worker at http://localhost:3001
 
-### 6. Log in
+### 6. Log in (auth setup)
 
-Open http://localhost:3000 in your browser. You will see a login page. You can:
-- Enter your email to receive a magic link
-- Sign in with Google (if configured)
-- After sign-in, a profile is created automatically
+To enable authentication:
+1. Enable Email/OTP and Google OAuth providers in your Supabase dashboard under Authentication > Providers
+2. Run the migrations in `supabase/migrations/` to create the profiles table and auto-profile trigger
+3. Auth middleware will guard /staff and /manager routes, redirecting to a login page
 
 ## Environment variables reference
 
@@ -85,8 +85,10 @@ Open http://localhost:3000 in your browser. You will see a login page. You can:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-# Redis (optional - for production)
-REDIS_URL=redis://localhost:6379
+# Supabase (required)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # Gemini API
 GEMINI_API_KEY=your-gemini-api-key
@@ -96,6 +98,7 @@ WEATHER_API_KEY=your-openweathermap-api-key
 
 # Socket.io
 NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
+NEXT_PUBLIC_WORKER_URL=http://localhost:3001
 ```
 
 ## Production deployment
