@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { DigitalTwinEngine } from './twin/engine';
+import { syncOrders } from './supabase/sync';
 
 dotenv.config();
 
@@ -69,8 +70,23 @@ io.on('connection', (socket) => {
 
 // Continuous Digital Twin Event Loop (Every 5 seconds)
 const TICK_INTERVAL_MS = 5000;
-setInterval(() => {
+setInterval(async () => {
   const updatedState = twinEngine.tick();
+
+  // Sync real orders from Supabase and emit status changes
+  try {
+    const syncResult = await syncOrders();
+    if (syncResult.orders.length > 0) {
+      updatedState.activeOrders = syncResult.orders;
+    }
+    for (const change of syncResult.statusChanges) {
+      io.emit('order:status_change', change);
+      console.log(`[Order Event] ${change.orderId}: ${change.from} -> ${change.to}`);
+    }
+  } catch {
+    // sync silently fails - twin state continues with simulated data
+  }
+
   io.emit('twin:state_update', updatedState);
 }, TICK_INTERVAL_MS);
 
@@ -78,4 +94,9 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`[Maestro Agent Worker] running on port ${PORT}`);
   console.log(`WebSocket server live; Digital Twin engine ticking every ${TICK_INTERVAL_MS}ms`);
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.log(`Supabase sync enabled`);
+  } else {
+    console.log(`Supabase sync disabled (no SUPABASE_SERVICE_ROLE_KEY) - using simulated data`);
+  }
 });

@@ -4,19 +4,28 @@ import { getSocket } from '../socket/client';
 
 const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:3001';
 
+interface OrderStatusChange {
+  orderId: string;
+  from: string;
+  to: string;
+}
+
 interface TwinStore {
   state: TwinState | null;
   isConnected: boolean;
   isCrisisActive: boolean;
+  orderStatusChanges: OrderStatusChange[];
   initSocket: () => void;
   triggerCrisis: () => void;
   resolveTask: (taskId: string) => void;
+  clearStatusChanges: () => void;
 }
 
 export const useTwinStore = create<TwinStore>((set, get) => ({
   state: null,
   isConnected: false,
   isCrisisActive: false,
+  orderStatusChanges: [],
 
   initSocket: () => {
     if (typeof window === 'undefined') return;
@@ -27,6 +36,11 @@ export const useTwinStore = create<TwinStore>((set, get) => ({
 
     socket.on('twin:state_update', (newState: TwinState) => {
       set({ state: newState });
+    });
+
+    socket.on('order:status_change', (change: OrderStatusChange) => {
+      const current = get().orderStatusChanges;
+      set({ orderStatusChanges: [change, ...current].slice(0, 20) });
     });
 
     socket.on('crisis:alert', () => {
@@ -53,5 +67,9 @@ export const useTwinStore = create<TwinStore>((set, get) => ({
       );
       set({ state: { ...currentState, staffTasks: updatedTasks } });
     }
+  },
+
+  clearStatusChanges: () => {
+    set({ orderStatusChanges: [] });
   },
 }));
