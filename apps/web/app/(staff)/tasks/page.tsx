@@ -3,12 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useTwinStore } from '../../../lib/store/useTwinStore';
+import { useToastStore } from '../../../lib/store/useToastStore';
 import type { StaffTask } from '@maestro/shared';
 import { PageTransition } from '../../../components/ui/PageTransition';
 import { ErrorBoundary } from '../../../components/ui/ErrorBoundary';
 
 export default function StaffTasksPage() {
   const { state, initSocket, resolveTask } = useTwinStore();
+  const addToast = useToastStore((s) => s.addToast);
   const [tasks, setTasks] = useState<StaffTask[]>([]);
   const [resolving, setResolving] = useState<string | null>(null);
 
@@ -23,7 +25,7 @@ export default function StaffTasksPage() {
         }));
       }
     } catch {
-      // keep existing
+      addToast('Failed to fetch tasks', 'error');
     }
   }, []);
 
@@ -45,7 +47,7 @@ export default function StaffTasksPage() {
       resolveTask(taskId);
       fetchTasks();
     } catch {
-      // fallback to store-only
+      addToast('Failed to resolve task, using local state', 'error');
       resolveTask(taskId);
     } finally {
       setResolving(null);

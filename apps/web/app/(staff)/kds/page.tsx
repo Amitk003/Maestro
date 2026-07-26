@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useTwinStore } from '../../../lib/store/useTwinStore';
+import { useToastStore } from '../../../lib/store/useToastStore';
 import { PageTransition } from '../../../components/ui/PageTransition';
 import { ErrorBoundary } from '../../../components/ui/ErrorBoundary';
 
@@ -58,6 +59,7 @@ function PrepTimer({ created_at, base_prep }: { created_at: string; base_prep: n
 
 export default function KitchenKDSPage() {
   const { state, initSocket } = useTwinStore();
+  const addToast = useToastStore((s) => s.addToast);
   const [queue, setQueue] = useState<QueueOrder[]>([]);
   const [markingReady, setMarkingReady] = useState<string | null>(null);
   const [filterStation, setFilterStation] = useState<string>('all');
@@ -68,7 +70,7 @@ export default function KitchenKDSPage() {
       const data = await res.json();
       if (data.orders) setQueue(data.orders);
     } catch {
-      // keep existing queue on error
+      addToast('Failed to fetch kitchen queue', 'error');
     }
   }, []);
 
@@ -89,7 +91,7 @@ export default function KitchenKDSPage() {
       });
       fetchQueue();
     } catch {
-      // silent
+      addToast('Failed to mark order ready', 'error');
     } finally {
       setMarkingReady(null);
     }

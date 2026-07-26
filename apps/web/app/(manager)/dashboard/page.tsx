@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useTwinStore } from '../../../lib/store/useTwinStore';
+import { useToastStore } from '../../../lib/store/useToastStore';
 import { FloorplanVisualizer } from '../../../components/twin/FloorplanVisualizer';
 import { AgentFeed } from '../../../components/agents/AgentFeed';
 import { MiniTrendChart } from '../../../components/ui/MiniTrendChart';
@@ -21,6 +22,7 @@ interface SimulationResult {
 
 export default function ManagerDashboardPage() {
   const { state, initSocket, triggerCrisis, orderStatusChanges, clearStatusChanges, metricHistory } = useTwinStore();
+  const addToast = useToastStore((s) => s.addToast);
   const [whatIfScenario, setWhatIfScenario] = useState('rain_surge');
   const [simResult, setSimResult] = useState<SimulationResult | null>(null);
   const [simRunning, setSimRunning] = useState(false);
@@ -42,7 +44,7 @@ export default function ManagerDashboardPage() {
       const data = await res.json();
       if (data.deltas) setSimResult(data);
     } catch {
-      // fallback: generate locally
+      addToast('Worker unreachable, running simulation locally', 'error');
       const fallbackRecs: Record<string, string[]> = {
         rain_surge: ['Promote comfort food items on menu', 'Alert kitchen for 25% volume increase', 'Pre-stage 4 extra table settings'],
         grill_outage: ['Reroute grill items to Saute and Cold Prep', 'Promote non-grill features', 'Extend prep times by 8 min'],

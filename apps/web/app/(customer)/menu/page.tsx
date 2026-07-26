@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTwinStore } from '../../../lib/store/useTwinStore';
+import { useToastStore } from '../../../lib/store/useToastStore';
 import { PageTransition } from '../../../components/ui/PageTransition';
 import { ErrorBoundary } from '../../../components/ui/ErrorBoundary';
 
@@ -46,6 +47,7 @@ function computeAvailability(item: MenuItem, state: { stations: { id: string; he
 
 export default function CustomerMenuPage() {
   const { state, initSocket } = useTwinStore();
+  const addToast = useToastStore((s) => s.addToast);
   const [intentInput, setIntentInput] = useState('');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [createdSequence, setCreatedSequence] = useState<Record<string, unknown> | null>(null);
@@ -59,7 +61,7 @@ export default function CustomerMenuPage() {
       .then((data) => {
         if (data.items) setMenuItems(data.items);
       })
-      .catch(() => {});
+      .catch(() => addToast('Failed to load menu', 'error'));
   }, [initSocket]);
 
   const handleCreateMeal = async () => {
@@ -79,7 +81,7 @@ export default function CustomerMenuPage() {
         });
       }
     } catch {
-      // Fallback: use hardcoded sequence
+      addToast('Intent parser unavailable, using local fallback', 'error');
       setCreatedSequence({
         vibe: intentInput,
         starter: { name: 'Chilled Citrus Salmon Tartare', station: 'Cold Prep Bar', timing: 'Immediate (4 mins)' },
@@ -112,6 +114,7 @@ export default function CustomerMenuPage() {
         setOrderId(data.order.id);
       }
     } catch {
+      addToast('Order submission failed, saved locally', 'error');
       setOrderId('pending_local');
     } finally {
       setSubmitting(false);
