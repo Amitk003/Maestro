@@ -1,8 +1,15 @@
 import { TwinState, AgentLog, StaffTask } from '@maestro/shared';
 import { createInitialTwinState } from './initialState';
+import { propose as guestAlchemistPropose } from '../agents/guest-alchemist';
+import { propose as kitchenConductorPropose } from '../agents/kitchen-conductor';
+import { propose as inventoryGuardianPropose } from '../agents/inventory-guardian';
+import { propose as staffHarmonyPropose } from '../agents/staff-harmony';
+import { propose as demandSeerPropose } from '../agents/demand-seer';
+import { resolve as orchestratorResolve } from '../agents/orchestrator';
 
 export class DigitalTwinEngine {
   private state: TwinState;
+  private tickCount = 0;
 
   constructor() {
     this.state = createInitialTwinState();
@@ -12,8 +19,9 @@ export class DigitalTwinEngine {
     return this.state;
   }
 
-  public tick(): TwinState {
+  public tick(): { state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[] } {
     this.state.timestamp = new Date().toISOString();
+    this.tickCount++;
 
     // 1. Decay ingredients freshness slightly
     this.state.ingredients = this.state.ingredients.map((ing) => {
@@ -22,15 +30,12 @@ export class DigitalTwinEngine {
     });
 
     // 2. Adjust station heat indices based on active order load
-    const grillLoad = this.state.activeOrders.filter((o) =>
-      o.items.some((i) => i.station_id === 'ST_GRILL' && i.status === 'in_prep')
-    ).length;
     this.state.stations = this.state.stations.map((st) => {
-      if (st.id === 'ST_GRILL') {
-        const heat_index = Math.min(100, Math.max(10, grillLoad * 25 + 10));
-        return { ...st, heat_index, current_queue_depth: grillLoad * 2 };
-      }
-      return st;
+      const stationOrders = this.state.activeOrders.filter((o) =>
+        o.items.some((i) => i.station_id === st.id && i.status === 'in_prep')
+      ).length;
+      const heat_index = Math.min(100, Math.max(10, stationOrders * 20 + 10));
+      return { ...st, heat_index, current_queue_depth: Math.max(st.current_queue_depth, stationOrders) };
     });
 
     // 3. Dynamic metric fluctuations
@@ -38,7 +43,46 @@ export class DigitalTwinEngine {
       (this.state.metrics.waste_prevented_kg + 0.05).toFixed(2)
     );
 
-    return this.state;
+    // 4. Run agent proposals every 3 ticks (15s) to avoid flooding logs
+    if (this.tickCount % 3 === 0) {
+      return this.runAgentCycle();
+    }
+
+    return { state: this.state, newLogs: [], newTasks: [] };
+  }
+
+  private runAgentCycle(): { state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[] } {
+    const allProposals: AgentLog[] = [
+      ...guestAlchemistPropose(this.state),
+      ...kitchenConductorPropose(this.state),
+      ...inventoryGuardianPropose(this.state),
+      ...demandSeerPropose(this.state),
+    ];
+
+    const staffResult = staffHarmonyPropose(this.state);
+    allProposals.push(...staffResult.logs);
+
+    // Orchestrator resolves conflicts
+    const resolvedLogs = orchestratorResolve(allProposals);
+
+    // Apply accepted proposals to state
+    for (const log of resolvedLogs) {
+      if (log.status === 'accepted') {
+        if (log.agent_name === 'inventory_guardian' && log.action_type === 'spoilage_salvage') {
+          const menuItemName = (log.proposal as Record<string, unknown>).menu_item as string;
+          this.state.menuItems = this.state.menuItems.map((m) =>
+            m.name === menuItemName
+              ? { ...m, spoilage_priority_boost: 25 }
+              : m
+          );
+        }
+      }
+    }
+
+    this.state.agentLogs = [...resolvedLogs, ...this.state.agentLogs].slice(0, 50);
+    this.state.staffTasks = [...staffResult.tasks, ...this.state.staffTasks].slice(0, 20);
+
+    return { state: this.state, newLogs: resolvedLogs, newTasks: staffResult.tasks };
   }
 
   public triggerCrisis(): { state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[] } {
