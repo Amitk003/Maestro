@@ -1,15 +1,54 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useTwinStore } from '../../../lib/store/useTwinStore';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useTwinStore } from '../../../lib/store/useTwinStore';
+import type { StaffTask } from '@maestro/shared';
 
 export default function StaffTasksPage() {
   const { state, initSocket, resolveTask } = useTwinStore();
+  const [tasks, setTasks] = useState<StaffTask[]>([]);
+  const [resolving, setResolving] = useState<string | null>(null);
+
+  const fetchTasks = useCallback(async () => {
+    try {
+      const res = await fetch('/api/staff/tasks');
+      const data = await res.json();
+      if (data.tasks) {
+        setTasks(data.tasks.sort((a: StaffTask, b: StaffTask) => {
+          const urgencyRank: Record<string, number> = { critical: 0, urgent: 1, attention: 2, normal: 3 };
+          return (urgencyRank[a.urgency] ?? 99) - (urgencyRank[b.urgency] ?? 99);
+        }));
+      }
+    } catch {
+      // keep existing
+    }
+  }, []);
 
   useEffect(() => {
     initSocket();
-  }, [initSocket]);
+    fetchTasks();
+    const interval = setInterval(fetchTasks, 5000);
+    return () => clearInterval(interval);
+  }, [initSocket, fetchTasks]);
+
+  const handleResolve = async (taskId: string) => {
+    setResolving(taskId);
+    try {
+      await fetch('/api/staff/tasks', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: taskId, status: 'completed' }),
+      });
+      resolveTask(taskId);
+      fetchTasks();
+    } catch {
+      // fallback to store-only
+      resolveTask(taskId);
+    } finally {
+      setResolving(null);
+    }
+  };
 
   const getUrgencyBadge = (urgency: string) => {
     switch (urgency) {
@@ -20,23 +59,30 @@ export default function StaffTasksPage() {
     }
   };
 
+  const twinTasks = state?.staffTasks || [];
+  const displayTasks = tasks.length > 0 ? tasks : twinTasks;
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-6 font-sans">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
           <div>
             <h1 className="text-3xl font-black tracking-tight">Staff Harmony Feed</h1>
-            <p className="text-xs text-zinc-400">Proactive ranked micro-tasks & fatigue management</p>
+            <p className="text-xs text-zinc-400">Proactive ranked micro-tasks and fatigue management</p>
           </div>
-          <Link href="/" className="text-xs text-zinc-400 hover:text-white">Back to Home</Link>
+          <Link href="/" className="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 transition">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Home</span>
+          </Link>
         </div>
 
-        {/* Staff Energy / Fatigue Header Card */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 mb-8 flex justify-between items-center">
           <div>
             <span className="text-xs text-zinc-400 uppercase font-mono">Shift Energy Monitor</span>
             <div className="text-2xl font-black text-emerald-400 mt-0.5">
-              {state?.metrics.staff_energy_avg || 78}% Optimal
+              {state?.metrics?.staff_energy_avg ?? 78}% Optimal
             </div>
           </div>
           <div className="text-right">
@@ -45,11 +91,16 @@ export default function StaffTasksPage() {
           </div>
         </div>
 
-        {/* Task List */}
         <div className="space-y-4">
           <h2 className="text-lg font-bold">Ranked Micro-Task Action Feed</h2>
 
-          {state?.staffTasks.map((task) => (
+          {displayTasks.length === 0 && (
+            <div className="text-xs text-zinc-500 text-center py-12 border border-dashed border-zinc-800 rounded-2xl">
+              No tasks available right now
+            </div>
+          )}
+
+          {displayTasks.map((task: StaffTask) => (
             <div
               key={task.id}
               className={`rounded-2xl border p-5 transition-all ${
@@ -73,10 +124,11 @@ export default function StaffTasksPage() {
               {task.status !== 'completed' ? (
                 <div className="mt-4 flex gap-3">
                   <button
-                    onClick={() => resolveTask(task.id)}
-                    className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-black hover:bg-zinc-200 transition"
+                    onClick={() => handleResolve(task.id)}
+                    disabled={resolving === task.id}
+                    className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-black hover:bg-zinc-200 transition disabled:opacity-50"
                   >
-                    Accept & Execute
+                    {resolving === task.id ? 'Resolving...' : 'Accept and Execute'}
                   </button>
                   <button className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-xs text-zinc-400 hover:text-white transition">
                     Snooze 2m
