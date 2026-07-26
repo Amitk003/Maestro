@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useTwinStore } from '../lib/store/useTwinStore';
@@ -9,6 +9,7 @@ import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 
 export default function Home() {
   const { state, isConnected, isCrisisActive, initSocket, triggerCrisis } = useTwinStore();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     initSocket();
@@ -57,8 +58,8 @@ export default function Home() {
           )}
         </div>
 
-        {/* Nav Links */}
-        <div className="flex items-center gap-3 text-xs font-medium">
+        {/* Nav Links Desktop */}
+        <div className="hidden md:flex items-center gap-3 text-xs font-medium">
           <Link href="/customer/menu" className="text-zinc-400 hover:text-white transition-colors">Guest Portal</Link>
           <Link href="/staff/tasks" className="text-zinc-400 hover:text-white transition-colors">Staff UI</Link>
           <Link href="/staff/kds" className="text-zinc-400 hover:text-white transition-colors">KDS</Link>
@@ -66,7 +67,33 @@ export default function Home() {
             Manager Twin
           </Link>
         </div>
+
+        {/* Mobile Hamburger */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 text-zinc-400 hover:text-white transition-colors"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
+          </svg>
+        </button>
       </header>
+
+      {/* Mobile Nav Menu */}
+      {mobileMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="md:hidden border-b border-zinc-900/80 bg-zinc-950/95 backdrop-blur-xl px-6 py-4 flex flex-col gap-3 text-sm"
+        >
+          <Link href="/customer/menu" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-white transition-colors">Guest Portal</Link>
+          <Link href="/staff/tasks" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-white transition-colors">Staff UI</Link>
+          <Link href="/staff/kds" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-white transition-colors">KDS</Link>
+          <Link href="/manager/dashboard" onClick={() => setMobileMenuOpen(false)} className="rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-zinc-950 hover:bg-zinc-200 transition-all inline-block text-center">
+            Manager Twin
+          </Link>
+        </motion.div>
+      )}
 
       {/* Main Hero Container */}
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center max-w-5xl mx-auto z-10">

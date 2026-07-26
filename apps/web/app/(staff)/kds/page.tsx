@@ -106,7 +106,7 @@ export default function KitchenKDSPage() {
   return (
     <ErrorBoundary>
     <PageTransition>
-    <div className="min-h-screen bg-zinc-950 text-white p-6 font-sans">
+    <div className="min-h-screen bg-zinc-950 text-white p-4 md:p-6 font-sans">
       <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight">Kitchen Conductor KDS</h1>
@@ -121,7 +121,7 @@ export default function KitchenKDSPage() {
       </div>
 
       {/* Station Heatmap */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
         {stations.length === 0 && (
           <div className="col-span-full text-xs text-zinc-500 text-center py-4">
             Waiting for station data from agent worker...
@@ -179,7 +179,7 @@ export default function KitchenKDSPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
         {filteredQueue.map((ord) => {
           const maxPrep = Math.max(...ord.order_items.map((i) => i.menu_item?.base_prep_minutes || 10));
           return (

@@ -72,7 +72,7 @@ export default function ManagerDashboardPage() {
   return (
     <ErrorBoundary>
     <PageTransition>
-    <div className="min-h-screen bg-zinc-950 text-white p-6 font-sans">
+    <div className="min-h-screen bg-zinc-950 text-white p-4 md:p-6 font-sans">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
           <div>
@@ -94,7 +94,7 @@ export default function ManagerDashboardPage() {
         {isLoading ? (
           <KPISkeleton />
         ) : (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4 mb-8">
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
             <div className="text-xs text-zinc-400 font-mono">Table Turnover</div>
             <div className="text-2xl font-black text-white mt-1">
@@ -134,7 +134,7 @@ export default function ManagerDashboardPage() {
         )}
 
         {/* Main Grid: Floorplan + Agent Feed / Orders */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 mb-8">
           <div className="lg:col-span-7">
             {state && <FloorplanVisualizer tables={state.tables} stations={state.stations} />}
           </div>
@@ -223,7 +223,7 @@ export default function ManagerDashboardPage() {
           </div>
 
           {simResult && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {/* Before/After Comparison */}
               <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
                 <h4 className="text-sm font-bold text-white mb-3">KPI Impact Analysis</h4>

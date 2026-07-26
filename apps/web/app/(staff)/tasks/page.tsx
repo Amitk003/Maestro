@@ -69,7 +69,7 @@ export default function StaffTasksPage() {
   return (
     <ErrorBoundary>
     <PageTransition>
-    <div className="min-h-screen bg-zinc-950 text-white p-6 font-sans">
+    <div className="min-h-screen bg-zinc-950 text-white p-4 md:p-6 font-sans">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
           <div>

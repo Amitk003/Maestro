@@ -126,7 +126,7 @@ export default function CustomerMenuPage() {
   return (
     <ErrorBoundary>
     <PageTransition>
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 font-sans">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 md:p-6 font-sans">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
           <div>
@@ -235,7 +235,7 @@ export default function CustomerMenuPage() {
 
         <div>
           <h2 className="text-xl font-bold mb-4">Live Dynamic Menu</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             {displayItems.map((item: MenuItem) => {
               const avail = computeAvailability(item, state ? { stations: state.stations, ingredients: state.ingredients, menuItems: state.menuItems } : null);
               return (
