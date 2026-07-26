@@ -60,16 +60,33 @@ export default function CustomerMenuPage() {
       .catch(() => {});
   }, [initSocket]);
 
-  const handleCreateMeal = () => {
+  const handleCreateMeal = async () => {
     if (!intentInput.trim()) return;
-    setCreatedSequence({
-      vibe: intentInput,
-      starter: { name: 'Chilled Citrus Salmon Tartare', station: 'Cold Prep Bar', timing: 'Immediate (4 mins)' },
-      main: { name: 'Pan-Seared Atlantic Salmon', station: 'Saute Station', timing: '12 mins' },
-      drink: { name: 'Sparkling Yuzu Botanical Tonic', timing: 'Immediate' },
-      tableTime: '25 minutes total',
-      recoveryPerk: state?.weather?.condition === 'stormy' ? 'Complimentary Warm Ginger Toddy added by Guest Alchemist (Rain Perk)' : null,
-    });
+    try {
+      const res = await fetch('/api/orders/intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: intentInput }),
+      });
+      const data = await res.json();
+      if (data.sequence) {
+        const seq = data.sequence;
+        setCreatedSequence({
+          ...seq,
+          recoveryPerk: state?.weather?.condition === 'stormy' ? 'Complimentary Warm Ginger Toddy added by Guest Alchemist (Rain Perk)' : null,
+        });
+      }
+    } catch {
+      // Fallback: use hardcoded sequence
+      setCreatedSequence({
+        vibe: intentInput,
+        starter: { name: 'Chilled Citrus Salmon Tartare', station: 'Cold Prep Bar', timing: 'Immediate (4 mins)' },
+        main: { name: 'Pan-Seared Atlantic Salmon', station: 'Saute Station', timing: '12 mins' },
+        drink: { name: 'Sparkling Yuzu Botanical Tonic', timing: 'Immediate' },
+        tableTime: '25 minutes total',
+        recoveryPerk: state?.weather?.condition === 'stormy' ? 'Complimentary Warm Ginger Toddy added by Guest Alchemist (Rain Perk)' : null,
+      });
+    }
   };
 
   const handleSubmitOrder = async () => {

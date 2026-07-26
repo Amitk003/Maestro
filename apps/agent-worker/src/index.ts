@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { DigitalTwinEngine } from './twin/engine';
 import { syncOrders } from './supabase/sync';
+import { fetchWeather } from './external/weather';
 
 dotenv.config();
 
@@ -72,10 +73,25 @@ io.on('connection', (socket) => {
   });
 });
 
+// Weather refresh interval (every 10 minutes)
+const WEATHER_INTERVAL_MS = 10 * 60 * 1000;
+let lastWeatherFetch = 0;
+
 // Continuous Digital Twin Event Loop (Every 5 seconds)
 const TICK_INTERVAL_MS = 5000;
 setInterval(async () => {
   const { state: updatedState, newLogs, newTasks } = twinEngine.tick();
+
+  // Fetch real weather periodically
+  if (Date.now() - lastWeatherFetch > WEATHER_INTERVAL_MS) {
+    try {
+      const weather = await fetchWeather();
+      updatedState.weather = weather;
+      lastWeatherFetch = Date.now();
+    } catch {
+      // keep existing weather
+    }
+  }
 
   // Sync real orders from Supabase and emit status changes
   try {

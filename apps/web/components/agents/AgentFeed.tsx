@@ -11,6 +11,8 @@ interface AgentFeedProps {
 export const AgentFeed: React.FC<AgentFeedProps> = ({ logs }) => {
   const { latestProposals, isCrisisActive } = useTwinStore();
   const [incoming, setIncoming] = useState<AgentLog[]>([]);
+  const [filterAgent, setFilterAgent] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -85,9 +87,39 @@ export const AgentFeed: React.FC<AgentFeedProps> = ({ logs }) => {
         </div>
       )}
 
+      {/* Filters */}
+      <div className="flex gap-2 mb-3">
+        <select
+          value={filterAgent}
+          onChange={(e) => setFilterAgent(e.target.value)}
+          className="text-[10px] rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1 text-zinc-300 focus:outline-none cursor-pointer"
+        >
+          <option value="all">All Agents</option>
+          <option value="guest_alchemist">Guest Alchemist</option>
+          <option value="kitchen_conductor">Kitchen Conductor</option>
+          <option value="inventory_guardian">Inventory Guardian</option>
+          <option value="staff_harmony">Staff Harmony</option>
+          <option value="demand_seer">Demand Seer</option>
+          <option value="maestro_orchestrator">Orchestrator</option>
+        </select>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="text-[10px] rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1 text-zinc-300 focus:outline-none cursor-pointer"
+        >
+          <option value="all">All Status</option>
+          <option value="accepted">Accepted</option>
+          <option value="overridden">Overridden</option>
+          <option value="proposed">Proposed</option>
+        </select>
+      </div>
+
       {/* Feed */}
-      <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-        {logs.map((log) => (
+      <div className="space-y-3 max-h-[260px] overflow-y-auto pr-1">
+        {logs
+          .filter((log) => filterAgent === 'all' || log.agent_name === filterAgent)
+          .filter((log) => filterStatus === 'all' || log.status === filterStatus)
+          .map((log) => (
           <div
             key={log.id}
             className="rounded-xl border border-zinc-900 bg-zinc-900/60 p-3.5 text-xs transition-all hover:border-zinc-800"
