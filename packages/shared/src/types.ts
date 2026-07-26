@@ -1,141 +1,70 @@
-export type UserRole = 'customer' | 'waiter' | 'chef' | 'manager' | 'owner';
+import { z } from 'zod';
+import {
+  UserRoleSchema,
+  TableStatusSchema,
+  TableZoneSchema,
+  OrderStatusSchema,
+  OrderTypeSchema,
+  OrderItemStatusSchema,
+  AgentNameSchema,
+  ProposalStatusSchema,
+  TableSchema,
+  KitchenStationSchema,
+  IngredientSchema,
+  MenuItemSchema,
+  OrderSchema,
+  OrderItemSchema,
+  AgentLogSchema,
+  StaffTaskSchema,
+} from './schemas';
 
-export type TableStatus =
-  | 'vacant'
-  | 'reserved'
-  | 'seated'
-  | 'ordering'
-  | 'waiting_food'
-  | 'eating'
-  | 'payment'
-  | 'dirty';
+export type UserRole = z.infer<typeof UserRoleSchema>;
+export type TableStatus = z.infer<typeof TableStatusSchema>;
+export type TableZone = z.infer<typeof TableZoneSchema>;
+export type OrderStatus = z.infer<typeof OrderStatusSchema>;
+export type OrderType = z.infer<typeof OrderTypeSchema>;
+export type OrderItemStatus = z.infer<typeof OrderItemStatusSchema>;
+export type AgentName = z.infer<typeof AgentNameSchema>;
+export type ProposalStatus = z.infer<typeof ProposalStatusSchema>;
 
-export type TableZone = 'patio' | 'main' | 'bar' | 'private';
+export type Table = z.infer<typeof TableSchema>;
+export type KitchenStation = z.infer<typeof KitchenStationSchema>;
+export type Ingredient = z.infer<typeof IngredientSchema>;
+export type MenuItem = z.infer<typeof MenuItemSchema>;
+export type Order = z.infer<typeof OrderSchema>;
+export type OrderItem = z.infer<typeof OrderItemSchema>;
+export type AgentLog = z.infer<typeof AgentLogSchema>;
+export type StaffTask = z.infer<typeof StaffTaskSchema>;
 
-export type OrderStatus =
-  | 'pending'
-  | 'in_prep'
-  | 'ready'
-  | 'served'
-  | 'billed'
-  | 'closed';
-
-export type OrderType = 'dine_in' | 'takeaway';
-
-export type OrderItemStatus = 'pending' | 'in_prep' | 'completed';
-
-export type AgentName =
-  | 'demand_seer'
-  | 'kitchen_conductor'
-  | 'inventory_guardian'
-  | 'guest_alchemist'
-  | 'staff_harmony'
-  | 'maestro_orchestrator';
-
-export type ProposalStatus = 'proposed' | 'accepted' | 'overridden';
-
-export interface Profile {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  restaurant_id: string;
-  created_at: string;
-}
-
-export interface Restaurant {
-  id: string;
-  name: string;
-  address: string;
-  timezone: string;
-  config: Record<string, unknown>;
-}
-
-export interface Table {
-  id: string;
-  restaurant_id: string;
-  zone: TableZone;
-  capacity: number;
-  status: TableStatus;
-  position_x: number;
-  position_y: number;
-  assigned_waiter_id: string | null;
-  active_session_id: string | null;
-}
-
-export interface KitchenStation {
-  id: string;
-  restaurant_id: string;
-  name: string;
-  max_capacity: number;
-  current_queue_depth: number;
-  heat_index: number;
-  assigned_staff_ids: string[];
-}
-
-export interface Ingredient {
-  id: string;
-  restaurant_id: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  shelf_life_hours: number;
-  harvested_at: string;
-  freshness_pct: number;
-  storage_temp: number;
-  predicted_spoilage_at: string;
-}
-
-export interface MenuItemIngredient {
-  ingredient_id: string;
-  ratio: number;
-}
-
-export interface MenuItem {
-  id: string;
-  restaurant_id: string;
-  name: string;
+export interface WeatherInfo {
+  condition: 'sunny' | 'rainy' | 'cold' | 'stormy';
+  temp_celsius: number;
   description: string;
-  price: number;
-  category: string;
-  base_prep_minutes: number;
-  ingredients: MenuItemIngredient[];
-  station_requirements: string[];
-  available: boolean;
-  image_url: string | null;
 }
 
-export interface Order {
-  id: string;
-  restaurant_id: string;
-  table_id: string;
-  customer_id: string;
-  status: OrderStatus;
-  type: OrderType;
-  notes: string;
-  created_at: string;
-  updated_at: string;
+export interface LocalEventInfo {
+  title: string;
+  location: string;
+  expected_surge: 'low' | 'medium' | 'high';
+  start_time: string;
 }
 
-export interface OrderItem {
-  id: string;
-  order_id: string;
-  menu_item_id: string;
-  quantity: number;
-  modifiers: Record<string, unknown>;
-  station_id: string;
-  status: OrderItemStatus;
-  prep_started_at: string | null;
-  prep_completed_at: string | null;
-}
-
-export interface AgentLog {
-  id: string;
-  agent_name: AgentName;
-  action_type: string;
-  target_entity: string;
-  proposal: Record<string, unknown>;
-  utility_score: number;
-  status: ProposalStatus;
-  created_at: string;
+export interface TwinState {
+  timestamp: string;
+  tables: Table[];
+  stations: KitchenStation[];
+  ingredients: Ingredient[];
+  menuItems: MenuItem[];
+  activeOrders: Order[];
+  agentLogs: AgentLog[];
+  staffTasks: StaffTask[];
+  weather: WeatherInfo;
+  localEvent: LocalEventInfo;
+  metrics: {
+    table_turnover_min: number;
+    kitchen_bottleneck_pct: number;
+    guest_delight_score: number;
+    waste_prevented_kg: number;
+    staff_energy_avg: number;
+  };
 }
