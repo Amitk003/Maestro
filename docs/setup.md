@@ -38,19 +38,30 @@ Open `.env` and fill in the values:
 | NEXT_PUBLIC_SUPABASE_URL | Your Supabase project URL |
 | NEXT_PUBLIC_SUPABASE_ANON_KEY | Your Supabase anonymous key |
 
-### 3. Set up the database
+### 3. Set up the database (Supabase)
 
-If using Supabase:
-1. Create a new project at https://supabase.com
+1. Create a project at https://supabase.com
 2. Copy your project URL and anon key into `.env`
-3. Run the migrations from `supabase/migrations/`
+3. Go to the SQL Editor in your Supabase dashboard
+4. Open each file in `supabase/migrations/` in order:
+   - `00001_schema.sql` - creates all tables
+   - `00002_rls.sql` - sets up row-level security
+   - `00003_seed.sql` - inserts demo data
+   - `00004_triggers.sql` - creates auto-profile trigger
+   - `00005_agent_logs_tasks.sql` - creates staff_tasks table
+5. Run each file in the SQL Editor
 
-If using local PostgreSQL:
-1. Make sure PostgreSQL is running
-2. Create a database called `maestro`
-3. Update DATABASE_URL in `.env`
+### 4. Set up Google OAuth (optional)
 
-### 4. Start development
+1. Go to https://console.cloud.google.com and create a project
+2. Enable the Google OAuth API
+3. Create OAuth credentials (Web application type)
+4. Add redirect URI: `https://YOUR-PROJECT.supabase.co/auth/v1/callback`
+5. Copy the Client ID and Client Secret
+6. In your Supabase dashboard, go to Authentication > Providers
+7. Enable Google and paste the Client ID and Secret
+
+### 5. Start development
 
 ```bash
 npm run dev
@@ -60,28 +71,19 @@ This starts both:
 - The Next.js frontend at http://localhost:3000
 - The agent worker at http://localhost:3001
 
-### 5. Log in
+### 6. Log in
 
 Open http://localhost:3000 in your browser. You will see a login page. You can:
-- Sign up with email and password
+- Enter your email to receive a magic link
 - Sign in with Google (if configured)
-- Use a demo account (if seed data is loaded)
+- After sign-in, a profile is created automatically
 
 ## Environment variables reference
 
 ```
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/maestro
-
-# Supabase
+# Supabase (required)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-
-# Auth
-NEXTAUTH_SECRET=random-string-here
-NEXTAUTH_URL=http://localhost:3000
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # Redis (optional - for production)
 REDIS_URL=redis://localhost:6379
