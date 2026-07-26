@@ -33,6 +33,8 @@ export class DigitalTwinEngine {
   private state: TwinState;
   private tickCount = 0;
   private metricHistory: MetricSnapshot[] = [];
+  public crisisPhase = -1;
+  public crisisActive = false;
 
   constructor() {
     this.state = createInitialTwinState();
@@ -221,88 +223,143 @@ export class DigitalTwinEngine {
     return { state: this.state, newLogs: resolvedLogs, newTasks: staffResult.tasks };
   }
 
-  public triggerCrisis(): { state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[] } {
-    // 1. Spike Grill station to overload & change weather to stormy
+  public triggerCrisis(): { state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[]; phase: number } {
+    this.crisisActive = true;
+    this.crisisPhase = 0;
+    const timestamp = new Date().toISOString();
+
+    // Phase 0: Environment degrades
     this.state.weather = {
       condition: 'stormy',
       temp_celsius: 9,
-      description: 'Heavy thunderstorm + Stadium crowd arrival spike!',
+      description: 'Heavy thunderstorm approaching - stadium event ending!',
     };
-
     const grill = this.state.stations.find((s) => s.id === 'ST_GRILL');
-    if (grill) {
-      grill.heat_index = 98;
-      grill.current_queue_depth = 14;
-    }
-
-    // 2. Mark Atlantic Salmon as critical spoilage risk
+    if (grill) { grill.heat_index = 82; grill.current_queue_depth = 10; }
     const salmon = this.state.ingredients.find((i) => i.id === 'ING_SALMON');
-    if (salmon) {
-      salmon.freshness_pct = 22;
+    if (salmon) { salmon.freshness_pct = 35; }
+
+    const phase0Log: AgentLog = {
+      id: `CRISIS_P0_${Date.now()}`,
+      agent_name: 'demand_seer',
+      action_type: 'crisis_detected',
+      target_entity: 'RESTAURANT_GLOBAL',
+      proposal: { action: 'Crisis detected', reason: 'Storm + event surge inbound. 82% grill load, Salmon at 35%.' },
+      utility_score: 9.9,
+      status: 'proposed',
+      created_at: timestamp,
+    };
+    this.state.agentLogs = [phase0Log, ...this.state.agentLogs];
+
+    return { state: this.state, newLogs: [phase0Log], newTasks: [], phase: 0 };
+  }
+
+  public advanceCrisis(): { state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[]; phase: number; resolved: boolean } {
+    const timestamp = new Date().toISOString();
+    this.crisisPhase++;
+    const phase = this.crisisPhase;
+
+    if (phase === 1) {
+      // Phase 1: Agents detect and propose
+      const grill = this.state.stations.find((s) => s.id === 'ST_GRILL');
+      if (grill) { grill.heat_index = 94; grill.current_queue_depth = 12; }
+      const sal = this.state.ingredients.find((i) => i.id === 'ING_SALMON');
+      if (sal) { sal.freshness_pct = 28; }
+      this.state.metrics.kitchen_bottleneck_pct = 72;
+
+      const log1: AgentLog = {
+        id: `CRISIS_P1_${Date.now()}`,
+        agent_name: 'inventory_guardian',
+        action_type: 'spoilage_alert',
+        target_entity: 'ING_SALMON',
+        proposal: { action: 'Salmon spoilage critical', reason: 'Salmon at 28% freshness. Promote Cold Salmon Tartare immediately to salvage 2.8kg.' },
+        utility_score: 9.2,
+        status: 'proposed',
+        created_at: timestamp,
+      };
+      const log2: AgentLog = {
+        id: `CRISIS_P1b_${Date.now()}`,
+        agent_name: 'kitchen_conductor',
+        action_type: 'bottleneck_detected',
+        target_entity: 'ST_GRILL',
+        proposal: { action: 'Grill overload detected', reason: 'Grill at 94% heat. Reroute 3 salmon dishes to Cold Prep Bar.' },
+        utility_score: 9.5,
+        status: 'proposed',
+        created_at: timestamp,
+      };
+
+      this.state.agentLogs = [log2, log1, ...this.state.agentLogs];
+      return { state: this.state, newLogs: [log1, log2], newTasks: [], phase: 1, resolved: false };
     }
 
-    // 3. Inject Agent Proposals & Orchestrator Consensus
-    const crisisLog1: AgentLog = {
-      id: `CRISIS_LOG_${Date.now()}_1`,
-      agent_name: 'inventory_guardian',
-      action_type: 'menu_morph_spoilage_salvage',
-      target_entity: 'ING_SALMON',
-      proposal: {
-        action: 'Promote Cold Salmon Tartare (Station: COLD)',
-        reason: 'Salmon at 22% freshness - salvage 3.5kg before expiry',
-        spoilage_salvage_kg: 3.5,
-      },
-      utility_score: 9.4,
-      status: 'accepted',
-      created_at: new Date().toISOString(),
-    };
+    if (phase === 2) {
+      // Phase 2: Orchestrator resolves
+      const log3: AgentLog = {
+        id: `CRISIS_P2_${Date.now()}`,
+        agent_name: 'maestro_orchestrator',
+        action_type: 'global_optimum_consensus',
+        target_entity: 'RESTAURANT_GLOBAL',
+        proposal: {
+          consensus: 'Approved Cold Salmon Tartare morph & Grill reroute. Global score +14.2%.',
+          weighted_outcomes: { guest: +0.18, kitchen: +0.22, waste: +0.35 },
+        },
+        utility_score: 9.9,
+        status: 'accepted',
+        created_at: timestamp,
+      };
+      this.state.agentLogs = [log3, ...this.state.agentLogs];
 
-    const crisisLog2: AgentLog = {
-      id: `CRISIS_LOG_${Date.now()}_2`,
-      agent_name: 'kitchen_conductor',
-      action_type: 'grill_bottleneck_reroute',
-      target_entity: 'ST_GRILL',
-      proposal: {
-        action: 'Reroute 4 fish mains from Grill to Cold Prep Bar',
-        reason: 'Grill heat index at 98%. Rerouting drops grill latency by 14 mins.',
-      },
-      utility_score: 9.7,
-      status: 'accepted',
-      created_at: new Date().toISOString(),
-    };
+      // Apply orchestrator actions
+      this.state.menuItems = this.state.menuItems.map((m) =>
+        m.name.includes('Salmon Tartare') ? { ...m, spoilage_priority_boost: 30 } : m
+      );
 
-    const crisisLog3: AgentLog = {
-      id: `CRISIS_LOG_${Date.now()}_3`,
-      agent_name: 'maestro_orchestrator',
-      action_type: 'global_optimum_consensus',
-      target_entity: 'RESTAURANT_GLOBAL',
-      proposal: {
-        consensus: 'Approved Cold Salmon Tartare morph & Grill reroute',
-        global_score_delta: '+14.2%',
-        weighted_outcomes: { guest: +0.18, kitchen: +0.22, waste: +0.35 },
-      },
-      utility_score: 9.9,
-      status: 'accepted',
-      created_at: new Date().toISOString(),
-    };
+      const crisisTask: StaffTask = {
+        id: `TASK_CRISIS_${Date.now()}`,
+        title: 'Move Table 4 & Serve Cold Salmon Amuse-Bouche',
+        description: 'Kitchen Conductor rerouted Grill load; Guest Alchemist authorized free perk for delayed tables.',
+        urgency: 'critical',
+        target_table_id: 'T4',
+        target_station_id: 'ST_COLD',
+        status: 'pending',
+        created_at: timestamp,
+      };
+      this.state.staffTasks = [crisisTask, ...this.state.staffTasks];
 
-    // 4. Inject Proactive Staff Action Task
-    const crisisTask: StaffTask = {
-      id: `TASK_${Date.now()}`,
-      title: 'Move Table 4 & Serve Cold Salmon Amuse-Bouche',
-      description: 'Kitchen Conductor rerouted Grill load; Guest Alchemist authorized free perk.',
-      urgency: 'critical',
-      target_table_id: 'T4',
-      target_station_id: 'ST_COLD',
-      status: 'pending',
-      created_at: new Date().toISOString(),
-    };
+      return { state: this.state, newLogs: [log3], newTasks: [crisisTask], phase: 2, resolved: false };
+    }
 
-    this.state.agentLogs = [crisisLog3, crisisLog2, crisisLog1, ...this.state.agentLogs];
-    this.state.staffTasks = [crisisTask, ...this.state.staffTasks];
-    this.state.metrics.kitchen_bottleneck_pct = 88;
+    if (phase === 3) {
+      // Phase 3: Recovery - global score recovers
+      const grill = this.state.stations.find((s) => s.id === 'ST_GRILL');
+      if (grill) { grill.heat_index = 55; grill.current_queue_depth = 4; }
+      this.state.metrics.kitchen_bottleneck_pct = 38;
+      this.state.metrics.waste_prevented_kg = parseFloat((this.state.metrics.waste_prevented_kg + 3.2).toFixed(2));
+      this.state.metrics.guest_delight_score = Math.min(5, this.state.metrics.guest_delight_score + 0.3);
 
-    return { state: this.state, newLogs: [crisisLog1, crisisLog2, crisisLog3], newTasks: [crisisTask] };
+      const log4: AgentLog = {
+        id: `CRISIS_P3_${Date.now()}`,
+        agent_name: 'maestro_orchestrator',
+        action_type: 'crisis_resolved',
+        target_entity: 'RESTAURANT_GLOBAL',
+        proposal: {
+          action: 'Crisis resolved',
+          reason: 'All agents reached consensus. Grill load normalized to 55%, 3.2kg waste salvaged, guest score recovering.',
+          global_score_delta: '+14.2%',
+        },
+        utility_score: 10.0,
+        status: 'accepted',
+        created_at: timestamp,
+      };
+      this.state.agentLogs = [log4, ...this.state.agentLogs];
+
+      this.crisisActive = false;
+      this.crisisPhase = -1;
+
+      return { state: this.state, newLogs: [log4], newTasks: [], phase: 3, resolved: true };
+    }
+
+    return { state: this.state, newLogs: [], newTasks: [], phase, resolved: true };
   }
 
   public resolveTask(taskId: string): TwinState {

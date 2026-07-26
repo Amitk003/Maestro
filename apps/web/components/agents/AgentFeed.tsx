@@ -9,7 +9,7 @@ interface AgentFeedProps {
 }
 
 export const AgentFeed: React.FC<AgentFeedProps> = ({ logs }) => {
-  const { latestProposals, isCrisisActive } = useTwinStore();
+  const { latestProposals, isCrisisActive, crisisPhase, crisisResolved } = useTwinStore();
   const [incoming, setIncoming] = useState<AgentLog[]>([]);
   const [filterAgent, setFilterAgent] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -47,7 +47,17 @@ export const AgentFeed: React.FC<AgentFeedProps> = ({ logs }) => {
           <p className="text-xs text-zinc-400">Real-time negotiations, proposals and consensus</p>
         </div>
         <div className="flex items-center gap-2">
-          {isCrisisActive && (
+          {crisisPhase && (
+            <span className="text-[10px] px-2 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse font-bold">
+              PHASE {crisisPhase.phase + 1}: {crisisPhase.label.toUpperCase()}
+            </span>
+          )}
+          {crisisResolved && (
+            <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
+              CRISIS AVERTED
+            </span>
+          )}
+          {isCrisisActive && !crisisPhase && (
             <span className="text-[10px] px-2 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse font-bold">
               CRISIS ACTIVE
             </span>
@@ -58,6 +68,31 @@ export const AgentFeed: React.FC<AgentFeedProps> = ({ logs }) => {
           </span>
         </div>
       </div>
+
+      {/* Crisis Phase Banner */}
+      {crisisPhase && (
+        <div className="mb-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-bold text-rose-400 uppercase">
+              Phase {crisisPhase.phase + 1} of 4: {crisisPhase.label}
+            </span>
+            <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-rose-500 transition-all"
+                style={{ width: `${((crisisPhase.phase + 1) / 4) * 100}%` }}
+              />
+            </div>
+          </div>
+          <p className="text-xs text-rose-300">{crisisPhase.message}</p>
+        </div>
+      )}
+
+      {crisisResolved && (
+        <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-center">
+          <p className="text-xs font-bold text-emerald-400">Crisis Resolved - Global Score +14.2%</p>
+          <p className="text-[10px] text-emerald-300 mt-1">Multi-Agent Swarm successfully stabilized operations</p>
+        </div>
+      )}
 
       {/* Incoming Proposals Banner */}
       {incoming.length > 0 && (
