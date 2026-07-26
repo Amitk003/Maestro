@@ -30,7 +30,7 @@ export default function Home() {
             <span className="text-lg font-black tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
               MAESTRO
             </span>
-            <span className="ml-2 text.xs font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px]">
+            <span className="ml-2 text-xs font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
               v2.0 Swarm OS
             </span>
           </div>
@@ -45,7 +45,7 @@ export default function Home() {
           {state && (
             <>
               <span className="text-zinc-700">|</span>
-              <div>Weather: <span className="text-zinc-200 font-semibold">{state.weather.condition} ({state.weather.temp_celsius}°C)</span></div>
+              <div>Weather: <span className="text-zinc-200 font-semibold">{state.weather.condition} ({state.weather.temp_celsius}C)</span></div>
               <span className="text-zinc-700">|</span>
               <div>CSAT: <span className="text-emerald-400 font-semibold">{state.metrics.guest_delight_score} / 5</span></div>
             </>
