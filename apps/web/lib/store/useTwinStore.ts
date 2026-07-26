@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { TwinState } from '@maestro/shared';
+import { TwinState, AgentLog, StaffTask } from '@maestro/shared';
 import { getSocket } from '../socket/client';
 
 const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:3001';
@@ -15,6 +15,7 @@ interface TwinStore {
   isConnected: boolean;
   isCrisisActive: boolean;
   orderStatusChanges: OrderStatusChange[];
+  latestProposals: AgentLog[];
   initSocket: () => void;
   triggerCrisis: () => void;
   resolveTask: (taskId: string) => void;
@@ -26,6 +27,7 @@ export const useTwinStore = create<TwinStore>((set, get) => ({
   isConnected: false,
   isCrisisActive: false,
   orderStatusChanges: [],
+  latestProposals: [],
 
   initSocket: () => {
     if (typeof window === 'undefined') return;
@@ -41,6 +43,15 @@ export const useTwinStore = create<TwinStore>((set, get) => ({
     socket.on('order:status_change', (change: OrderStatusChange) => {
       const current = get().orderStatusChanges;
       set({ orderStatusChanges: [change, ...current].slice(0, 20) });
+    });
+
+    socket.on('agent:proposal', (proposals: AgentLog[]) => {
+      set({ latestProposals: proposals });
+    });
+
+    socket.on('staff:new_tasks', () => {
+      // New tasks will be picked up on next state update;
+      // the KDS/tasks pages also poll independently
     });
 
     socket.on('crisis:alert', () => {

@@ -34,6 +34,8 @@ app.get('/api/twin/state', (_req, res) => {
 app.post('/api/crisis/trigger', (_req, res) => {
   const result = twinEngine.triggerCrisis();
   io.emit('twin:state_update', result.state);
+  io.emit('agent:proposal', result.newLogs);
+  io.emit('staff:new_tasks', result.newTasks);
   io.emit('crisis:alert', { message: 'Crisis Alert: Peak Hour Crisis Simulated! Multi-Agent Swarm activated.' });
   res.json({ success: true, state: result.state });
 });
@@ -55,6 +57,8 @@ io.on('connection', (socket) => {
   socket.on('crisis:trigger', () => {
     const result = twinEngine.triggerCrisis();
     io.emit('twin:state_update', result.state);
+    io.emit('agent:proposal', result.newLogs);
+    io.emit('staff:new_tasks', result.newTasks);
     io.emit('crisis:alert', { message: 'Crisis Alert: Peak Hour Crisis Simulated!' });
   });
 
@@ -71,7 +75,7 @@ io.on('connection', (socket) => {
 // Continuous Digital Twin Event Loop (Every 5 seconds)
 const TICK_INTERVAL_MS = 5000;
 setInterval(async () => {
-  const updatedState = twinEngine.tick();
+  const { state: updatedState, newLogs, newTasks } = twinEngine.tick();
 
   // Sync real orders from Supabase and emit status changes
   try {
@@ -85,6 +89,16 @@ setInterval(async () => {
     }
   } catch {
     // sync silently fails - twin state continues with simulated data
+  }
+
+  // Emit agent proposals if any were generated this tick
+  if (newLogs.length > 0) {
+    io.emit('agent:proposal', newLogs);
+  }
+
+  // Emit new staff tasks
+  if (newTasks.length > 0) {
+    io.emit('staff:new_tasks', newTasks);
   }
 
   io.emit('twin:state_update', updatedState);
