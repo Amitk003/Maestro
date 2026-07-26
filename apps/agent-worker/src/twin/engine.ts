@@ -7,16 +7,58 @@ import { propose as staffHarmonyPropose } from '../agents/staff-harmony';
 import { propose as demandSeerPropose } from '../agents/demand-seer';
 import { resolve as orchestratorResolve } from '../agents/orchestrator';
 
+export type MetricSnapshot = {
+  timestamp: string;
+  table_turnover_min: number;
+  kitchen_bottleneck_pct: number;
+  guest_delight_score: number;
+  waste_prevented_kg: number;
+  staff_energy_avg: number;
+};
+
+export interface SimulationResult {
+  before: MetricSnapshot;
+  after: MetricSnapshot;
+  deltas: {
+    table_turnover_min: number;
+    kitchen_bottleneck_pct: number;
+    guest_delight_score: number;
+    waste_prevented_kg: number;
+    staff_energy_avg: number;
+  };
+  recommendations: string[];
+}
+
 export class DigitalTwinEngine {
   private state: TwinState;
   private tickCount = 0;
+  private metricHistory: MetricSnapshot[] = [];
 
   constructor() {
     this.state = createInitialTwinState();
+    this.recordMetrics();
   }
 
   public getState(): TwinState {
     return this.state;
+  }
+
+  public getMetricHistory(): MetricSnapshot[] {
+    return this.metricHistory;
+  }
+
+  private recordMetrics() {
+    this.metricHistory.push({
+      timestamp: this.state.timestamp,
+      table_turnover_min: this.state.metrics.table_turnover_min,
+      kitchen_bottleneck_pct: this.state.metrics.kitchen_bottleneck_pct,
+      guest_delight_score: this.state.metrics.guest_delight_score,
+      waste_prevented_kg: this.state.metrics.waste_prevented_kg,
+      staff_energy_avg: this.state.metrics.staff_energy_avg,
+    });
+    if (this.metricHistory.length > 60) {
+      this.metricHistory = this.metricHistory.slice(-60);
+    }
   }
 
   public tick(): { state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[] } {
@@ -42,6 +84,10 @@ export class DigitalTwinEngine {
     this.state.metrics.waste_prevented_kg = parseFloat(
       (this.state.metrics.waste_prevented_kg + 0.05).toFixed(2)
     );
+    this.state.metrics.kitchen_bottleneck_pct = Math.min(100, this.state.metrics.kitchen_bottleneck_pct + (Math.random() * 2 - 1));
+    this.state.metrics.guest_delight_score = Math.min(5, Math.max(1, this.state.metrics.guest_delight_score + (Math.random() * 0.1 - 0.05)));
+
+    this.recordMetrics();
 
     // 4. Run agent proposals every 3 ticks (15s) to avoid flooding logs
     if (this.tickCount % 3 === 0) {
@@ -49,6 +95,96 @@ export class DigitalTwinEngine {
     }
 
     return { state: this.state, newLogs: [], newTasks: [] };
+  }
+
+  public simulate(scenario: string, ticks: number = 20): SimulationResult {
+    const before = this.metricHistory[this.metricHistory.length - 1] || this.getSnapshot();
+    const simState = JSON.parse(JSON.stringify(this.state)) as TwinState;
+
+    // Apply perturbation
+    switch (scenario) {
+      case 'rain_surge':
+        simState.weather = { condition: 'rainy', temp_celsius: 8, description: 'Sudden heavy rain' };
+        simState.metrics.kitchen_bottleneck_pct = Math.min(100, simState.metrics.kitchen_bottleneck_pct + 30);
+        break;
+      case 'grill_outage':
+        const grill = simState.stations.find((s) => s.id === 'ST_GRILL');
+        if (grill) { grill.heat_index = 0; grill.current_queue_depth = 0; }
+        simState.metrics.kitchen_bottleneck_pct = Math.min(100, simState.metrics.kitchen_bottleneck_pct + 45);
+        break;
+      case 'event_rush':
+        simState.tables = simState.tables.map((t) =>
+          t.status === 'vacant' ? { ...t, status: 'seated' as const, active_session_id: `SIM_${t.id}` } : t
+        );
+        simState.metrics.table_turnover_min += 15;
+        break;
+    }
+
+    // Run simulation ticks
+    for (let i = 0; i < ticks; i++) {
+      simState.ingredients = simState.ingredients.map((ing) => ({
+        ...ing, freshness_pct: Math.max(0, ing.freshness_pct - 0.5),
+      }));
+      simState.metrics.waste_prevented_kg = parseFloat((simState.metrics.waste_prevented_kg + 0.03).toFixed(2));
+      simState.metrics.kitchen_bottleneck_pct = Math.min(100, Math.max(0,
+        simState.metrics.kitchen_bottleneck_pct + (Math.random() * 4 - 2)
+      ));
+    }
+
+    const after = this.getSnapshotFrom(simState);
+    const deltas = {
+      table_turnover_min: parseFloat((after.table_turnover_min - before.table_turnover_min).toFixed(1)),
+      kitchen_bottleneck_pct: parseFloat((after.kitchen_bottleneck_pct - before.kitchen_bottleneck_pct).toFixed(1)),
+      guest_delight_score: parseFloat((after.guest_delight_score - before.guest_delight_score).toFixed(2)),
+      waste_prevented_kg: parseFloat((after.waste_prevented_kg - before.waste_prevented_kg).toFixed(2)),
+      staff_energy_avg: parseFloat((after.staff_energy_avg - before.staff_energy_avg).toFixed(1)),
+    };
+
+    const recommendations = this.generateRecommendations(scenario, deltas);
+
+    return { before, after, deltas, recommendations };
+  }
+
+  private generateRecommendations(scenario: string, deltas: SimulationResult['deltas']): string[] {
+    const recs: string[] = [];
+    if (scenario === 'rain_surge') {
+      recs.push('Promote comfort food items on menu (soup, risotto, warm dishes)');
+      recs.push('Alert kitchen for 25% volume increase preparation');
+      recs.push('Pre-stage 4 extra table settings in main and bar zones');
+      if (deltas.kitchen_bottleneck_pct > 10) recs.push('Reroute cold-prep items away from overloaded saute station');
+    } else if (scenario === 'grill_outage') {
+      recs.push('Reroute all grill items to Saute station and Cold Prep');
+      recs.push('Promote Cold Salmon Tartare and non-grill starters as Chef Features');
+      recs.push('Extend estimated prep times by 8 minutes for affected orders');
+      if (deltas.guest_delight_score < -0.3) recs.push('Authorize complimentary amuse-bouche for delayed tables');
+    } else if (scenario === 'event_rush') {
+      recs.push('Assign 2 additional waiters to main floor for next 90 minutes');
+      recs.push('Activate reservation queue and notify waiting guests of 5-min delay');
+      recs.push('Pre-stage dessert prep at Pastry station');
+    }
+    return recs;
+  }
+
+  private getSnapshot(): MetricSnapshot {
+    return {
+      timestamp: this.state.timestamp,
+      table_turnover_min: this.state.metrics.table_turnover_min,
+      kitchen_bottleneck_pct: this.state.metrics.kitchen_bottleneck_pct,
+      guest_delight_score: this.state.metrics.guest_delight_score,
+      waste_prevented_kg: this.state.metrics.waste_prevented_kg,
+      staff_energy_avg: this.state.metrics.staff_energy_avg,
+    };
+  }
+
+  private getSnapshotFrom(s: TwinState): MetricSnapshot {
+    return {
+      timestamp: s.timestamp,
+      table_turnover_min: s.metrics.table_turnover_min,
+      kitchen_bottleneck_pct: s.metrics.kitchen_bottleneck_pct,
+      guest_delight_score: s.metrics.guest_delight_score,
+      waste_prevented_kg: s.metrics.waste_prevented_kg,
+      staff_energy_avg: s.metrics.staff_energy_avg,
+    };
   }
 
   private runAgentCycle(): { state: TwinState; newLogs: AgentLog[]; newTasks: StaffTask[] } {
