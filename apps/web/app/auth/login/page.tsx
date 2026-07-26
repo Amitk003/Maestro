@@ -1,93 +1,103 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { signInWithOtp, signInWithGoogle } from '../../../lib/auth';
+import { PageTransition } from '../../../components/ui/PageTransition';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleOtpSubmit = async (e: React.FormEvent) => {
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    const { error: signInError } = await signInWithOtp(email);
-    if (signInError) {
-      setError(signInError.message);
+    if (!email.trim()) return;
+    setLoading(true);
+    setError(null);
+    const { error: err } = await signInWithOtp(email);
+    if (err) {
+      setError(err.message);
     } else {
       setSent(true);
     }
+    setLoading(false);
   };
 
-  const handleGoogleSignIn = async () => {
-    setError('');
-    const { error: signInError } = await signInWithGoogle();
-    if (signInError) {
-      setError(signInError.message);
-    }
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    const { error: err } = await signInWithGoogle();
+    if (err) setError(err.message);
+    setLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-white">Welcome to Maestro</h1>
-          <p className="mt-2 text-sm text-zinc-400">Sign in to continue</p>
-        </div>
-
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-400">
-            {error}
+    <PageTransition>
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-rose-500 via-amber-500 to-purple-600 p-[1px] mx-auto">
+              <div className="h-full w-full bg-zinc-950 rounded-[11px] flex items-center justify-center font-extrabold text-white text-lg">
+                M
+              </div>
+            </div>
+            <h1 className="text-2xl font-black tracking-tight mt-4">Maestro</h1>
+            <p className="text-sm text-zinc-400 mt-1">Sign in to your restaurant</p>
           </div>
-        )}
 
-        {sent ? (
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-6 text-center">
-            <p className="text-sm text-emerald-300 font-medium">
-              Check your email for a magic link.
-            </p>
-            <p className="mt-2 text-xs text-zinc-400">
-              You can close this page.
-            </p>
-          </div>
-        ) : (
-          <>
-            <form onSubmit={handleOtpSubmit} className="space-y-4">
+          {sent ? (
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-center">
+              <svg className="h-10 w-10 mx-auto text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <h2 className="text-lg font-bold text-white mt-3">Check your email</h2>
+              <p className="text-xs text-zinc-400 mt-1">A magic link has been sent to {email}</p>
+            </div>
+          ) : (
+            <form onSubmit={handleEmailLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-300">
-                  Email
+                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
+                  Email address
                 </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder="you@restaurant.com"
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
                   required
-                  className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-zinc-600 focus:outline-none"
                 />
               </div>
+
+              {error && (
+                <div className="text-xs text-rose-400 bg-rose-500/10 rounded-xl p-3 border border-rose-500/20">
+                  {error}
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-950 hover:bg-zinc-200 transition"
+                disabled={loading}
+                className="w-full rounded-xl bg-gradient-to-r from-purple-600 via-purple-500 to-rose-500 py-3 text-xs font-bold text-white shadow-lg hover:brightness-110 transition disabled:opacity-50"
               >
-                Send magic link
+                {loading ? 'Sending...' : 'Send Magic Link'}
               </button>
-            </form>
 
-            <div className="mt-6">
-              <div className="relative">
+              <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-zinc-800" />
+                  <div className="w-full border-t border-zinc-800" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-zinc-950 px-2 text-zinc-500">or</span>
+                  <span className="bg-zinc-950 px-2 text-zinc-500">or continue with</span>
                 </div>
               </div>
 
               <button
-                onClick={handleGoogleSignIn}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 transition"
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-3 text-xs font-semibold text-zinc-200 hover:bg-zinc-800 transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -95,18 +105,12 @@ export default function LoginPage() {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                 </svg>
-                Continue with Google
+                <span>Google</span>
               </button>
-            </div>
-          </>
-        )}
-
-        <p className="mt-8 text-center text-xs text-zinc-500">
-          <Link href="/" className="underline hover:text-zinc-300 transition">
-            Back to home
-          </Link>
-        </p>
+            </form>
+          )}
+        </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }
