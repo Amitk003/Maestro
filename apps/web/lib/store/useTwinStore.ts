@@ -19,10 +19,18 @@ export interface MetricSnapshot {
   staff_energy_avg: number;
 }
 
+interface CrisisPhase {
+  phase: number;
+  label: string;
+  message: string;
+}
+
 interface TwinStore {
   state: TwinState | null;
   isConnected: boolean;
   isCrisisActive: boolean;
+  crisisPhase: CrisisPhase | null;
+  crisisResolved: boolean;
   orderStatusChanges: OrderStatusChange[];
   latestProposals: AgentLog[];
   metricHistory: MetricSnapshot[];
@@ -36,6 +44,8 @@ export const useTwinStore = create<TwinStore>((set, get) => ({
   state: null,
   isConnected: false,
   isCrisisActive: false,
+  crisisPhase: null,
+  crisisResolved: false,
   orderStatusChanges: [],
   latestProposals: [],
   metricHistory: [],
@@ -69,9 +79,13 @@ export const useTwinStore = create<TwinStore>((set, get) => ({
       set({ metricHistory: history });
     });
 
-    socket.on('crisis:alert', () => {
-      set({ isCrisisActive: true });
-      setTimeout(() => set({ isCrisisActive: false }), 8000);
+    socket.on('crisis:phase', (phase: CrisisPhase) => {
+      set({ isCrisisActive: true, crisisPhase: phase, crisisResolved: false });
+    });
+
+    socket.on('crisis:resolved', () => {
+      set({ isCrisisActive: false, crisisResolved: true, crisisPhase: null });
+      setTimeout(() => set({ crisisResolved: false }), 6000);
     });
   },
 

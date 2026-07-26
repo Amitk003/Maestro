@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import type { TwinState, AgentLog, StaffTask } from '@maestro/shared';
 import { DigitalTwinEngine } from './twin/engine';
 import { syncOrders } from './supabase/sync';
 import { fetchWeather } from './external/weather';
@@ -36,10 +37,42 @@ app.post('/api/crisis/trigger', (_req, res) => {
   const result = twinEngine.triggerCrisis();
   io.emit('twin:state_update', result.state);
   io.emit('agent:proposal', result.newLogs);
-  io.emit('staff:new_tasks', result.newTasks);
-  io.emit('crisis:alert', { message: 'Crisis Alert: Peak Hour Crisis Simulated! Multi-Agent Swarm activated.' });
-  res.json({ success: true, state: result.state });
+  io.emit('crisis:phase', { phase: 0, label: 'Degradation', message: 'Storm approaching, grill load spiking, inventory at risk' });
+  scheduleCrisisAdvance(io, twinEngine);
+  res.json({ success: true, state: result.state, phase: 0 });
 });
+
+function scheduleCrisisAdvance(io: Server, engine: DigitalTwinEngine) {
+  let phase = 0;
+  const interval = setInterval(() => {
+    const result = engine.advanceCrisis();
+    io.emit('twin:state_update', result.state);
+    io.emit('agent:proposal', result.newLogs);
+    if (result.newTasks.length > 0) {
+      io.emit('staff:new_tasks', result.newTasks);
+    }
+
+    const phaseLabels = ['Detecting', 'Resolving', 'Recovering'];
+    const phaseMessages = [
+      'Agents detecting anomalies: Inventory Guardian flags Salmon spoilage, Kitchen Conductor detects grill bottleneck',
+      'Maestro Orchestrator resolving: morphing menu to Cold Salmon Tartare, rerouting Grill orders',
+      'Crisis resolved: grill load normalized, waste salvaged, guest score recovering',
+    ];
+
+    if (result.phase >= 1 && result.phase <= 3) {
+      io.emit('crisis:phase', {
+        phase: result.phase,
+        label: phaseLabels[result.phase - 1] || 'Resolved',
+        message: phaseMessages[result.phase - 1] || 'Crisis averted',
+      });
+    }
+
+    if (result.resolved) {
+      clearInterval(interval);
+      io.emit('crisis:resolved', { message: 'Multi-Agent Swarm successfully resolved the crisis. Global score +14.2%.' });
+    }
+  }, 4000);
+}
 
 app.post('/api/staff/tasks/:id/action', (req, res) => {
   const { id } = req.params;
@@ -65,8 +98,8 @@ io.on('connection', (socket) => {
     const result = twinEngine.triggerCrisis();
     io.emit('twin:state_update', result.state);
     io.emit('agent:proposal', result.newLogs);
-    io.emit('staff:new_tasks', result.newTasks);
-    io.emit('crisis:alert', { message: 'Crisis Alert: Peak Hour Crisis Simulated!' });
+    io.emit('crisis:phase', { phase: 0, label: 'Degradation', message: 'Storm approaching, grill load spiking, inventory at risk' });
+    scheduleCrisisAdvance(io, twinEngine);
   });
 
   socket.on('task:complete', (data: { taskId: string }) => {
