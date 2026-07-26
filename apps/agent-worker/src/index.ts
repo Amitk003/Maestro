@@ -48,6 +48,12 @@ app.post('/api/staff/tasks/:id/action', (req, res) => {
   res.json({ success: true, state });
 });
 
+app.post('/api/twin/simulate', (req, res) => {
+  const { scenario = 'rain_surge', ticks = 20 } = req.body || {};
+  const result = twinEngine.simulate(scenario, ticks);
+  res.json({ success: true, ...result });
+});
+
 // Socket.io Telemetry & Real-time Events
 io.on('connection', (socket) => {
   console.log(`[Agent-Worker] Client connected: ${socket.id}`);
@@ -115,6 +121,11 @@ setInterval(async () => {
   // Emit new staff tasks
   if (newTasks.length > 0) {
     io.emit('staff:new_tasks', newTasks);
+  }
+
+  // Emit metric history every 5th tick (25s)
+  if (twinEngine.getMetricHistory().length % 5 === 0) {
+    io.emit('metrics:history', twinEngine.getMetricHistory());
   }
 
   io.emit('twin:state_update', updatedState);

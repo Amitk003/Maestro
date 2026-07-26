@@ -10,12 +10,22 @@ interface OrderStatusChange {
   to: string;
 }
 
+export interface MetricSnapshot {
+  timestamp: string;
+  table_turnover_min: number;
+  kitchen_bottleneck_pct: number;
+  guest_delight_score: number;
+  waste_prevented_kg: number;
+  staff_energy_avg: number;
+}
+
 interface TwinStore {
   state: TwinState | null;
   isConnected: boolean;
   isCrisisActive: boolean;
   orderStatusChanges: OrderStatusChange[];
   latestProposals: AgentLog[];
+  metricHistory: MetricSnapshot[];
   initSocket: () => void;
   triggerCrisis: () => void;
   resolveTask: (taskId: string) => void;
@@ -28,6 +38,7 @@ export const useTwinStore = create<TwinStore>((set, get) => ({
   isCrisisActive: false,
   orderStatusChanges: [],
   latestProposals: [],
+  metricHistory: [],
 
   initSocket: () => {
     if (typeof window === 'undefined') return;
@@ -52,6 +63,10 @@ export const useTwinStore = create<TwinStore>((set, get) => ({
     socket.on('staff:new_tasks', () => {
       // New tasks will be picked up on next state update;
       // the KDS/tasks pages also poll independently
+    });
+
+    socket.on('metrics:history', (history: MetricSnapshot[]) => {
+      set({ metricHistory: history });
     });
 
     socket.on('crisis:alert', () => {
