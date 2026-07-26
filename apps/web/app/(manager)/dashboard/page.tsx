@@ -34,9 +34,9 @@ export default function ManagerDashboardPage() {
               onClick={triggerCrisis}
               className="rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 px-4 py-2 text-xs font-bold text-white shadow-lg hover:from-rose-500 hover:to-amber-500 transition"
             >
-              🔥 SIMULATE PEAK HOUR CRISIS
+              SIMULATE PEAK HOUR CRISIS
             </button>
-            <Link href="/" className="text-xs text-zinc-400 hover:text-white">← Home</Link>
+            <Link href="/" className="text-xs text-zinc-400 hover:text-white">Back to Home</Link>
           </div>
         </div>
 
@@ -47,7 +47,7 @@ export default function ManagerDashboardPage() {
             <div className="text-2xl font-black text-white mt-1">
               {state?.metrics.table_turnover_min || 44} <span className="text-xs font-normal text-zinc-400">min</span>
             </div>
-            <div className="text-[10px] text-emerald-400 mt-1">↓ 6 min vs baseline</div>
+            <div className="text-[10px] text-emerald-400 mt-1">6 min faster than baseline</div>
           </div>
 
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">

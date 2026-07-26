@@ -44,7 +44,7 @@ export const createInitialTwinState = (): TwinState => ({
   ],
   staffTasks: [
     { id: 'TASK_1', title: 'Move Table 12 to Table 8 now', description: 'Prevents 11-min predicted delay on incoming VIP reservation.', urgency: 'urgent', target_table_id: 'T12', status: 'pending', created_at: new Date().toISOString() },
-    { id: 'TASK_2', title: 'Serve complimentary amuse-bouche to T3', description: 'Grill station overload detected — offsets 4-min steak delay.', urgency: 'attention', target_table_id: 'T3', target_station_id: 'ST_GRILL', status: 'pending', created_at: new Date().toISOString() },
+    { id: 'TASK_2', title: 'Serve complimentary amuse-bouche to T3', description: 'Grill station overload detected - offsets 4-min steak delay.', urgency: 'attention', target_table_id: 'T3', target_station_id: 'ST_GRILL', status: 'pending', created_at: new Date().toISOString() },
   ],
   weather: { condition: 'rainy', temp_celsius: 14, description: 'Sudden cold downpour spiked soup/warm dish demand' },
   localEvent: { title: 'Symphony Hall Concert', location: '2 blocks away', expected_surge: 'high', start_time: '8:00 PM' },

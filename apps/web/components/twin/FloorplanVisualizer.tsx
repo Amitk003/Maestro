@@ -114,7 +114,7 @@ export const FloorplanVisualizer: React.FC<FloorplanProps> = ({ tables, stations
         <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-xs">
           <div className="flex justify-between items-center mb-2">
             <h4 className="font-bold text-white text-sm">Table {selectedTable.id} Details</h4>
-            <button onClick={() => setSelectedTable(null)} className="text-zinc-500 hover:text-white">✕</button>
+            <button onClick={() => setSelectedTable(null)} className="text-zinc-500 hover:text-white">Close</button>
           </div>
           <div className="grid grid-cols-3 gap-2 text-zinc-300">
             <div><span className="text-zinc-500">Zone:</span> {selectedTable.zone}</div>

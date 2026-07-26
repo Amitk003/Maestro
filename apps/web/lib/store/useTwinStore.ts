@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { TwinState } from '@maestro/shared';
 import { getSocket } from '../socket/client';
 
+const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:3001';
+
 interface TwinStore {
   state: TwinState | null;
   isConnected: boolean;
@@ -36,13 +38,13 @@ export const useTwinStore = create<TwinStore>((set, get) => ({
   triggerCrisis: () => {
     const socket = getSocket();
     socket.emit('crisis:trigger');
-    fetch('http://localhost:3001/api/crisis/trigger', { method: 'POST' }).catch(() => {});
+    fetch(`${WORKER_URL}/api/crisis/trigger`, { method: 'POST' }).catch(() => {});
   },
 
   resolveTask: (taskId: string) => {
     const socket = getSocket();
     socket.emit('task:complete', { taskId });
-    fetch(`http://localhost:3001/api/staff/tasks/${taskId}/action`, { method: 'POST' }).catch(() => {});
+    fetch(`${WORKER_URL}/api/staff/tasks/${taskId}/action`, { method: 'POST' }).catch(() => {});
 
     const currentState = get().state;
     if (currentState) {

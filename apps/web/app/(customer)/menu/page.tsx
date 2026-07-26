@@ -34,7 +34,7 @@ export default function CustomerMenuPage() {
             <h1 className="text-3xl font-black tracking-tight">Guest Alchemist Portal</h1>
             <p className="text-xs text-zinc-400">Intent-Based Ordering & Vibe Matching</p>
           </div>
-          <Link href="/" className="text-xs text-zinc-400 hover:text-white">← Home</Link>
+          <Link href="/" className="text-xs text-zinc-400 hover:text-white">Back to Home</Link>
         </div>
 
         {/* Intent Vibe Box */}
@@ -50,7 +50,7 @@ export default function CustomerMenuPage() {
             rows={3}
           />
           <div className="flex flex-wrap gap-2 mt-3 mb-4">
-            {['⚡ 15-Min Quick Rush', '🍷 Romantic Candlelight', '🥗 High-Protein Workout', '🎉 Group Celebration'].map((preset) => (
+            {['15-Min Quick Rush', 'Romantic Candlelight', 'High-Protein Workout', 'Group Celebration'].map((preset) => (
               <button
                 key={preset}
                 onClick={() => setIntentInput(preset)}
@@ -65,7 +65,7 @@ export default function CustomerMenuPage() {
             onClick={handleCreateMeal}
             className="w-full rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 py-3 text-sm font-bold text-white shadow-lg hover:from-rose-500 hover:to-amber-500 transition"
           >
-            ✨ Crate My Personal Dining Sequence
+            Create My Personal Dining Sequence
           </button>
         </div>
 
@@ -94,7 +94,7 @@ export default function CustomerMenuPage() {
 
               {createdSequence.recoveryPerk && (
                 <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300 font-medium">
-                  🎁 {createdSequence.recoveryPerk}
+                  {createdSequence.recoveryPerk}
                 </div>
               )}
             </div>
@@ -120,7 +120,7 @@ export default function CustomerMenuPage() {
                   <span className="text-zinc-500">Base Prep: {item.base_prep_minutes}m</span>
                   {item.spoilage_priority_boost > 0 && (
                     <span className="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                      ★ Chef Feature (+{item.spoilage_priority_boost}% Fresh Boost)
+                      Chef Feature (+{item.spoilage_priority_boost}% Fresh Boost)
                     </span>
                   )}
                 </div>

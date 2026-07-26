@@ -35,7 +35,7 @@ export default function Home() {
           </div>
           {state && (
             <>
-              <div>Weather: <span className="text-zinc-200">{state.weather.condition} ({state.weather.temp_celsius}°C)</span></div>
+              <div>Weather: <span className="text-zinc-200">{state.weather.condition} ({state.weather.temp_celsius}C)</span></div>
               <div>CSAT: <span className="text-emerald-400">{state.metrics.guest_delight_score} / 5</span></div>
             </>
           )}
@@ -56,7 +56,7 @@ export default function Home() {
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center max-w-5xl mx-auto">
         {isCrisisActive && (
           <div className="w-full mb-8 rounded-2xl bg-rose-500/20 border border-rose-500/50 p-4 text-rose-300 font-mono text-sm animate-bounce">
-            🔥 CRISIS SIMULATED: Rain storm + Stadium event surge! Multi-agent swarm auto-resolving bottlenecks...
+            CRISIS ACTIVE: Rain storm + Stadium event surge! Multi-agent swarm auto-resolving bottlenecks...
           </div>
         )}
 
@@ -79,7 +79,7 @@ export default function Home() {
             onClick={triggerCrisis}
             className="rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 px-8 py-4 text-sm font-bold text-white shadow-xl hover:from-rose-500 hover:to-amber-500 transition active:scale-95 flex items-center gap-2"
           >
-            🔥 SIMULATE PEAK-HOUR CRISIS
+            SIMULATE PEAK-HOUR CRISIS
           </button>
           <Link
             href="/manager/dashboard"
@@ -93,7 +93,7 @@ export default function Home() {
         <div className="mt-20 grid w-full grid-cols-1 md:grid-cols-3 gap-6 text-left">
           <Link href="/customer/menu" className="group rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 hover:border-purple-500/50 hover:bg-zinc-900/80 transition">
             <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center font-bold mb-4 group-hover:scale-110 transition">
-              ✨
+              GA
             </div>
             <h3 className="text-lg font-bold text-white">Guest Alchemist Portal</h3>
             <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
@@ -103,7 +103,7 @@ export default function Home() {
 
           <Link href="/staff/tasks" className="group rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 hover:border-amber-500/50 hover:bg-zinc-900/80 transition">
             <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold mb-4 group-hover:scale-110 transition">
-              ⚡
+              SH
             </div>
             <h3 className="text-lg font-bold text-white">Staff Harmony Feed</h3>
             <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
@@ -113,7 +113,7 @@ export default function Home() {
 
           <Link href="/manager/dashboard" className="group rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 hover:border-rose-500/50 hover:bg-zinc-900/80 transition">
             <div className="h-10 w-10 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center font-bold mb-4 group-hover:scale-110 transition">
-              📊
+              DT
             </div>
             <h3 className="text-lg font-bold text-white">Digital Twin Command Center</h3>
             <p className="mt-2 text-xs text-zinc-400 leading-relaxed">

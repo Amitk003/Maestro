@@ -69,7 +69,7 @@ export class DigitalTwinEngine {
       target_entity: 'ING_SALMON',
       proposal: {
         action: 'Promote Cold Salmon Tartare (Station: COLD)',
-        reason: 'Salmon at 22% freshness — salvage 3.5kg before expiry',
+        reason: 'Salmon at 22% freshness - salvage 3.5kg before expiry',
         spoilage_salvage_kg: 3.5,
       },
       utility_score: 9.4,
