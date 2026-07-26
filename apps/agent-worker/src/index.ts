@@ -33,7 +33,7 @@ app.get('/api/twin/state', (_req, res) => {
 app.post('/api/crisis/trigger', (_req, res) => {
   const result = twinEngine.triggerCrisis();
   io.emit('twin:state_update', result.state);
-  io.emit('crisis:alert', { message: '🔥 Peak Hour Crisis Simulated! Multi-Agent Swarm activated.' });
+  io.emit('crisis:alert', { message: 'Crisis Alert: Peak Hour Crisis Simulated! Multi-Agent Swarm activated.' });
   res.json({ success: true, state: result.state });
 });
 
@@ -54,7 +54,7 @@ io.on('connection', (socket) => {
   socket.on('crisis:trigger', () => {
     const result = twinEngine.triggerCrisis();
     io.emit('twin:state_update', result.state);
-    io.emit('crisis:alert', { message: '🔥 Peak Hour Crisis Simulated!' });
+    io.emit('crisis:alert', { message: 'Crisis Alert: Peak Hour Crisis Simulated!' });
   });
 
   socket.on('task:complete', (data: { taskId: string }) => {
@@ -76,6 +76,6 @@ setInterval(() => {
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`🚀 [Maestro Agent Worker] running on port ${PORT}`);
-  console.log(`📡 WebSocket server live; Digital Twin engine ticking every ${TICK_INTERVAL_MS}ms`);
+  console.log(`[Maestro Agent Worker] running on port ${PORT}`);
+  console.log(`WebSocket server live; Digital Twin engine ticking every ${TICK_INTERVAL_MS}ms`);
 });

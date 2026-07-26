@@ -18,7 +18,7 @@ export default function KitchenKDSPage() {
           <h1 className="text-3xl font-black tracking-tight">Kitchen Conductor KDS</h1>
           <p className="text-xs text-zinc-400">Station load balancing & automated order pathing</p>
         </div>
-        <Link href="/" className="text-xs text-zinc-400 hover:text-white">← Home</Link>
+        <Link href="/" className="text-xs text-zinc-400 hover:text-white">Back to Home</Link>
       </div>
 
       {/* Kitchen Station Load Heatmap Header */}
@@ -73,7 +73,7 @@ export default function KitchenKDSPage() {
             {ord.notes && <div className="text-xs text-purple-300 mb-4 font-mono">Notes: {ord.notes}</div>}
 
             <button className="w-full rounded-xl bg-emerald-600 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition">
-              ✓ Mark Ticket Ready
+              Mark Ticket Ready
             </button>
           </div>
         ))}

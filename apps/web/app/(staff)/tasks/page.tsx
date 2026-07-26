@@ -28,7 +28,7 @@ export default function StaffTasksPage() {
             <h1 className="text-3xl font-black tracking-tight">Staff Harmony Feed</h1>
             <p className="text-xs text-zinc-400">Proactive ranked micro-tasks & fatigue management</p>
           </div>
-          <Link href="/" className="text-xs text-zinc-400 hover:text-white">← Home</Link>
+          <Link href="/" className="text-xs text-zinc-400 hover:text-white">Back to Home</Link>
         </div>
 
         {/* Staff Energy / Fatigue Header Card */}
@@ -76,14 +76,14 @@ export default function StaffTasksPage() {
                     onClick={() => resolveTask(task.id)}
                     className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-black hover:bg-zinc-200 transition"
                   >
-                    ✓ Accept & Execute
+                    Accept & Execute
                   </button>
                   <button className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-xs text-zinc-400 hover:text-white transition">
                     Snooze 2m
                   </button>
                 </div>
               ) : (
-                <div className="mt-3 text-xs text-emerald-400 font-mono">✓ Task Executed</div>
+                <div className="mt-3 text-xs text-emerald-400 font-mono">Task Completed</div>
               )}
             </div>
           ))}
