@@ -34,7 +34,7 @@ SLIDE_W = Inches(13.333)
 SLIDE_H = Inches(7.5)
 
 PPTX_PATH = '../Vibeathon_6.0_Vibecoding_Hackathon_July_2026_Idea_Submission_Template.pptx'
-OUTPUT_PATH = '../Maestro_Hackathon_Submission.pptx'
+OUTPUT_PATH = '../Maestro_Hackathon_Submission_v2.pptx'
 
 
 def set_slide_bg(slide, color):
@@ -160,40 +160,46 @@ def create_icon_box(slide, left, top, width, height, icon_char, label, fill_colo
 # ══════════════════════════════════════════════════════════════════════════════
 # SLIDE 2: Current Problem
 # ══════════════════════════════════════════════════════════════════════════════
-def clear_slide(slide, keep_logos=True):
-    """Remove all shapes from a slide, optionally preserving logo images."""
-    if not keep_logos:
-        for shape in list(slide.shapes):
-            sp = shape._element
-            sp.getparent().remove(sp)
-        return
-    
-    # Identify logo shapes to preserve:
-    # - Top-left logo: pos ~(0.05, 0.00), size ~(1.62, 1.16)
-    # - Top-right logo: pos ~(12.33, 0.00), size ~(1.00, 1.08)
-    # - Center background: pos ~(4.08, 1.78), size ~(4.35, 4.78)
-    # - Slide 1 has different positions
-    logo_positions = []
+# Logo detection thresholds (template-specific)
+LOGO_LEFT_MAX_X = 0.3
+LOGO_LEFT_MAX_Y = 0.3
+LOGO_LEFT_MIN_W = 1.0
+LOGO_RIGHT_MIN_X = 11.0
+LOGO_RIGHT_MAX_Y = 0.3
+LOGO_RIGHT_MIN_W = 0.5
+BG_CENTER_MIN_X = 3.5
+BG_CENTER_MAX_X = 5.0
+BG_CENTER_MIN_Y = 1.0
+BG_CENTER_MAX_Y = 3.0
+BG_CENTER_MIN_W = 3.0
+
+def clear_slide(slide):
+    """Remove all shapes from a slide, preserving the 3 logo images (top-left, top-right, center background)."""
+    logo_shapes = []
     for shape in slide.shapes:
-        if shape.shape_type == 13:  # Picture type
-            left_in = shape.left / 914400
-            top_in = shape.top / 914400
-            w_in = shape.width / 914400
-            h_in = shape.height / 914400
-            
-            # Top-left logo (small, near origin)
-            if left_in < 0.3 and top_in < 0.3 and w_in > 1.0:
-                logo_positions.append(shape)
-            # Top-right logo
-            elif left_in > 11.0 and top_in < 0.3 and w_in > 0.5:
-                logo_positions.append(shape)
-            # Center background graphic
-            elif 3.5 < left_in < 5.0 and 1.0 < top_in < 3.0 and w_in > 3.0:
-                logo_positions.append(shape)
+        if shape.shape_type != 13:  # Not a picture
+            continue
+        left_in = shape.left / 914400
+        top_in = shape.top / 914400
+        w_in = shape.width / 914400
+        
+        is_logo = False
+        # Top-left logo (event branding)
+        if left_in < LOGO_LEFT_MAX_X and top_in < LOGO_LEFT_MAX_Y and w_in > LOGO_LEFT_MIN_W:
+            is_logo = True
+        # Top-right logo (corner icon)
+        elif left_in > LOGO_RIGHT_MIN_X and top_in < LOGO_RIGHT_MAX_Y and w_in > LOGO_RIGHT_MIN_W:
+            is_logo = True
+        # Center background graphic (watermark)
+        elif BG_CENTER_MIN_X < left_in < BG_CENTER_MAX_X and BG_CENTER_MIN_Y < top_in < BG_CENTER_MAX_Y and w_in > BG_CENTER_MIN_W:
+            is_logo = True
+        
+        if is_logo:
+            logo_shapes.append(shape)
     
     for shape in list(slide.shapes):
-        if shape in logo_positions:
-            continue  # Skip logo shapes
+        if shape in logo_shapes:
+            continue
         sp = shape._element
         sp.getparent().remove(sp)
 
