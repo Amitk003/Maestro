@@ -2,6 +2,8 @@
 -- Run this in Supabase SQL Editor after all other migrations
 -- Idempotent: safe to run multiple times.
 
+create extension if not exists "pgcrypto";
+
 do $$
 declare
   user_id uuid;
