@@ -67,7 +67,7 @@ export default function LoginPage() {
               </div>
 
               {mode === 'password' && (
-                <form action="/auth/login" method="POST">
+                <form action="/api/auth/login" method="POST">
                   <div className="space-y-4">
                     <div>
                       <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Email</label>
