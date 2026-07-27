@@ -25,7 +25,7 @@ create policy "Staff tasks viewable by staff"
   );
 
 create policy "Staff tasks insertable by system"
-  on staff_tasks for insert with true;
+  on staff_tasks for insert with check (true);
 
 create policy "Staff can update own tasks"
   on staff_tasks for update using (
