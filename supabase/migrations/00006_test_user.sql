@@ -2,8 +2,6 @@
 -- Run this in Supabase SQL Editor after all other migrations
 -- Idempotent: safe to run multiple times.
 
-create extension if not exists "pgcrypto";
-
 do $$
 declare
   user_id uuid;
@@ -20,7 +18,7 @@ begin
       'authenticated',
       'authenticated',
       'test@maestro.demo',
-      crypt('password123', gen_salt('bf')),
+      extensions.crypt('password123', extensions.gen_salt('bf')),
       now(),
       now(),
       now(),
