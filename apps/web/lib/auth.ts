@@ -11,6 +11,12 @@ export async function signInWithOtp(email: string) {
   return { error };
 }
 
+export async function signInWithPassword(email: string, password: string) {
+  const supabase = createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  return { error };
+}
+
 export async function signInWithGoogle() {
   const supabase = createClient();
   const { error } = await supabase.auth.signInWithOAuth({

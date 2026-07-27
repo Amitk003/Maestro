@@ -1,16 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { signInWithOtp, signInWithGoogle } from '../../../lib/auth';
+import { signInWithOtp, signInWithPassword, signInWithGoogle } from '../../../lib/auth';
 import { PageTransition } from '../../../components/ui/PageTransition';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [mode, setMode] = useState<'magic' | 'password'>('password');
+  const [email, setEmail] = useState('test@maestro.demo');
+  const [password, setPassword] = useState('password123');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
     setLoading(true);
@@ -20,6 +22,20 @@ export default function LoginPage() {
       setError(err.message);
     } else {
       setSent(true);
+    }
+    setLoading(false);
+  };
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password.trim()) return;
+    setLoading(true);
+    setError(null);
+    const { error: err } = await signInWithPassword(email, password);
+    if (err) {
+      setError(err.message);
+    } else {
+      window.location.href = '/dashboard';
     }
     setLoading(false);
   };
@@ -55,20 +71,23 @@ export default function LoginPage() {
               <p className="text-xs text-zinc-400 mt-1">A magic link has been sent to {email}</p>
             </div>
           ) : (
-            <form onSubmit={handleEmailLogin} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-                  Email address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@restaurant.com"
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
-                  required
-                />
+            <form onSubmit={mode === 'magic' ? handleMagicLink : handlePasswordLogin} className="space-y-4">
+              <div className="flex rounded-xl border border-zinc-800 overflow-hidden text-xs font-medium">
+                <button type="button" onClick={() => setMode('password')} className={`flex-1 py-2.5 transition ${mode === 'password' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Password</button>
+                <button type="button" onClick={() => setMode('magic')} className={`flex-1 py-2.5 transition ${mode === 'magic' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Magic Link</button>
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Email</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@restaurant.com" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+              </div>
+
+              {mode === 'password' && (
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Password</label>
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                </div>
+              )}
 
               {error && (
                 <div className="text-xs text-rose-400 bg-rose-500/10 rounded-xl p-3 border border-rose-500/20">
@@ -76,12 +95,8 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-gradient-to-r from-purple-600 via-purple-500 to-rose-500 py-3 text-xs font-bold text-white shadow-lg hover:brightness-110 transition disabled:opacity-50"
-              >
-                {loading ? 'Sending...' : 'Send Magic Link'}
+              <button type="submit" disabled={loading} className="w-full rounded-xl bg-gradient-to-r from-purple-600 via-purple-500 to-rose-500 py-3 text-xs font-bold text-white shadow-lg hover:brightness-110 transition disabled:opacity-50">
+                {loading ? 'Signing in...' : mode === 'magic' ? 'Send Magic Link' : 'Sign In'}
               </button>
 
               <div className="relative my-4">
@@ -93,12 +108,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                disabled={loading}
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-3 text-xs font-semibold text-zinc-200 hover:bg-zinc-800 transition disabled:opacity-50 flex items-center justify-center gap-2"
-              >
+              <button type="button" onClick={handleGoogleLogin} disabled={loading} className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-3 text-xs font-semibold text-zinc-200 hover:bg-zinc-800 transition disabled:opacity-50 flex items-center justify-center gap-2">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
                   <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
