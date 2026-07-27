@@ -106,7 +106,7 @@ export default function KitchenKDSPage() {
   return (
     <ErrorBoundary>
     <PageTransition>
-    <div className="min-h-screen bg-zinc-950 text-white p-4 md:p-6 font-sans">
+    <div className="min-h-screen bg-zinc-950 text-white p-4 md:p-6">
       <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight">Kitchen Conductor KDS</h1>
@@ -187,7 +187,7 @@ export default function KitchenKDSPage() {
               <div className="flex justify-between items-center border-b border-zinc-800 pb-3 mb-3">
                 <div>
                   <span className="font-bold text-white text-lg">Order #{ord.id.slice(0, 8)}</span>
-                  <div className="text-xs text-rose-400 font-mono">Table {ord.table_id || 'N/A'}</div>
+                  <div className="text-xs text-rose-400 font-mono">Table {ord.table_id ? `#${ord.table_id.slice(-4).toUpperCase()}` : 'N/A'}</div>
                 </div>
                 <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 uppercase font-mono">
                   {ord.status}
@@ -203,7 +203,7 @@ export default function KitchenKDSPage() {
                   <div key={item.id} className="rounded-xl border border-zinc-800/80 bg-zinc-950 p-3">
                     <div className="flex justify-between text-xs font-semibold">
                       <span>{item.quantity}x {item.menu_item?.name || item.menu_item_id}</span>
-                      <span className="text-zinc-500 font-mono">{item.station_id?.slice(0, 8) || 'unspecified'}</span>
+                      <span className="text-zinc-500 font-mono">{item.station_id?.slice(-4).toUpperCase() || 'unspecified'}</span>
                     </div>
                   </div>
                 ))}

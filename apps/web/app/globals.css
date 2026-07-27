@@ -10,9 +10,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-maestro: #0a7c7c;
-  --color-maestro-light: #0a9c9c;
-  --color-maestro-dark: #065c5c;
 }
 
 body {

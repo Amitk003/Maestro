@@ -1,6 +1,7 @@
 import type { TwinState, AgentLog, AgentName } from '@maestro/shared';
 import { callGemini, extractJSONArray } from '../llm/gemini';
 import { SYSTEM_PROMPTS, buildAgentStatePrompt } from '../llm/prompts';
+import { llmProposalsToLogs } from '../llm/llm-utils';
 import type { LLMProposal } from '../llm/types';
 
 function heuristicPropose(state: TwinState): AgentLog[] {
@@ -35,20 +36,6 @@ function heuristicPropose(state: TwinState): AgentLog[] {
   }
 
   return logs;
-}
-
-function llmProposalsToLogs(proposals: LLMProposal[], agentName: AgentName): AgentLog[] {
-  const timestamp = new Date().toISOString();
-  return proposals.map((p, i) => ({
-    id: `${agentName}_LLM_${Date.now()}_${i}`,
-    agent_name: agentName,
-    action_type: p.action_type,
-    target_entity: p.target_entity,
-    proposal: p.proposal,
-    utility_score: p.utility_score,
-    status: 'proposed' as const,
-    created_at: timestamp,
-  }));
 }
 
 export async function propose(state: TwinState): Promise<AgentLog[]> {

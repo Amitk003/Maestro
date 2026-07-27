@@ -72,7 +72,7 @@ export default function ManagerDashboardPage() {
   return (
     <ErrorBoundary>
     <PageTransition>
-    <div className="min-h-screen bg-zinc-950 text-white p-4 md:p-6 font-sans">
+    <div className="min-h-screen bg-zinc-950 text-white p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
           <div>
@@ -190,7 +190,7 @@ export default function ManagerDashboardPage() {
                           {ord.status}
                         </span>
                       </div>
-                      <div className="text-zinc-500 mt-1">Table {ord.table_id} | {ord.items.length} item(s) | {new Date(ord.created_at).toLocaleTimeString()}</div>
+                      <div className="text-zinc-500 mt-1">Table {ord.table_id ? `#${ord.table_id.slice(-4).toUpperCase()}` : 'N/A'} | {ord.items.length} item(s) | {new Date(ord.created_at).toLocaleTimeString()}</div>
                     </div>
                   ))}
                 </div>

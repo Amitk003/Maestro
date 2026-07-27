@@ -53,6 +53,8 @@ export const useTwinStore = create<TwinStore>((set, get) => ({
   initSocket: () => {
     if (typeof window === 'undefined') return;
     const socket = getSocket();
+    if ((socket as any)._maestroInitialized) return;
+    (socket as any)._maestroInitialized = true;
 
     socket.on('connect', () => set({ isConnected: true }));
     socket.on('disconnect', () => set({ isConnected: false }));
@@ -71,8 +73,7 @@ export const useTwinStore = create<TwinStore>((set, get) => ({
     });
 
     socket.on('staff:new_tasks', () => {
-      // New tasks will be picked up on next state update;
-      // the KDS/tasks pages also poll independently
+      // new tasks picked up on next state update or poll
     });
 
     socket.on('metrics:history', (history: MetricSnapshot[]) => {

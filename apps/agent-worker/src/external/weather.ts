@@ -17,7 +17,7 @@ export async function fetchWeather(): Promise<WeatherInfo> {
 
   try {
     const res = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=London&units=metric&appid=${apiKey}`
+      `https://api.openweathermap.org/data/2.5/weather?q=${process.env.WEATHER_CITY || 'London'}&units=metric&appid=${apiKey}`
     );
 
     if (!res.ok) throw new Error(`Weather API returned ${res.status}`);
@@ -40,17 +40,21 @@ export async function fetchWeather(): Promise<WeatherInfo> {
 
 function fallbackWeather(): WeatherInfo {
   const hour = new Date().getHours();
-  // Simulate reasonable weather based on time of day
-  if (hour >= 6 && hour < 12) {
-    return { condition: 'sunny', temp_celsius: 18, description: 'Morning sunshine' };
+  const day = new Date().getDate();
+  const seed = (day * 7 + hour * 13) % 10;
+  if (seed < 3) {
+    return { condition: 'sunny', temp_celsius: 18 + hour % 8, description: 'Clear skies' };
   }
-  if (hour >= 12 && hour < 18) {
-    return { condition: 'sunny', temp_celsius: 22, description: 'Afternoon clear skies' };
+  if (seed < 5) {
+    return { condition: 'rainy', temp_celsius: 10 + hour % 5, description: 'Light rain' };
   }
-  if (hour >= 18 && hour < 22) {
-    return { condition: 'sunny', temp_celsius: 16, description: 'Cool evening' };
+  if (seed < 7) {
+    return { condition: 'cold', temp_celsius: 2 + hour % 4, description: 'Chilly breeze' };
   }
-  return { condition: 'rainy', temp_celsius: 10, description: 'Night rain' };
+  if (seed < 9) {
+    return { condition: 'stormy', temp_celsius: 8 + hour % 3, description: 'Heavy winds' };
+  }
+  return { condition: 'sunny', temp_celsius: 20, description: 'Pleasant weather' };
 }
 
 function mapCondition(weatherMain: string): WeatherInfo['condition'] {

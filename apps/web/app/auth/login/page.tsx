@@ -26,11 +26,11 @@ function LoginForm() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Email</label>
-                <input name="email" type="email" defaultValue="test@maestro.demo" placeholder="you@restaurant.com" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                <input name="email" type="email" placeholder="you@restaurant.com" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Password</label>
-                <input name="password" type="password" defaultValue="password123" placeholder="Enter password" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                <input name="password" type="password" placeholder="Enter password" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
               </div>
               {errorParam && (
                 <div className="text-xs text-rose-400 bg-rose-500/10 rounded-xl p-3 border border-rose-500/20">{errorParam}</div>

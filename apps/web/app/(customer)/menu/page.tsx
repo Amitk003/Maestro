@@ -51,6 +51,7 @@ export default function CustomerMenuPage() {
   const [intentInput, setIntentInput] = useState('');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [createdSequence, setCreatedSequence] = useState<Record<string, unknown> | null>(null);
+  const [creatingSequence, setCreatingSequence] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
 
@@ -66,6 +67,7 @@ export default function CustomerMenuPage() {
 
   const handleCreateMeal = async () => {
     if (!intentInput.trim()) return;
+    setCreatingSequence(true);
     try {
       const res = await fetch('/api/orders/intent', {
         method: 'POST',
@@ -80,7 +82,9 @@ export default function CustomerMenuPage() {
           recoveryPerk: state?.weather?.condition === 'stormy' ? 'Complimentary Warm Ginger Toddy added by Guest Alchemist (Rain Perk)' : null,
         });
       }
+      setCreatingSequence(false);
     } catch {
+      setCreatingSequence(false);
       addToast('Intent parser unavailable, using local fallback', 'error');
       setCreatedSequence({
         vibe: intentInput,
@@ -97,16 +101,33 @@ export default function CustomerMenuPage() {
     if (!createdSequence) return;
     setSubmitting(true);
     try {
+      const mapItem = (item: Record<string, string> | undefined) => {
+        if (!item || !item.name) return null;
+        const match = menuItems.find((m) => m.name.toLowerCase() === item.name.toLowerCase());
+        if (!match) return null;
+        return {
+          menu_item_id: match.id,
+          quantity: 1,
+          station_id: match.station_requirements[0] || '',
+        };
+      };
+      const orderItems = [
+        mapItem(createdSequence.starter as Record<string, string>),
+        mapItem(createdSequence.main as Record<string, string>),
+        mapItem(createdSequence.drink as Record<string, string>),
+      ].filter((x): x is NonNullable<typeof x> => x !== null);
+      if (orderItems.length === 0) {
+        addToast('Could not match sequence items to menu items', 'error');
+        setSubmitting(false);
+        return;
+      }
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'dine_in',
           notes: createdSequence.vibe as string,
-          items: [
-            { menu_item_id: 'e0000000-0000-0000-0000-000000000003', quantity: 1, station_id: 'c0000000-0000-0000-0000-000000000003' },
-            { menu_item_id: 'e0000000-0000-0000-0000-000000000002', quantity: 1, station_id: 'c0000000-0000-0000-0000-000000000002' },
-          ],
+          items: orderItems,
         }),
       });
       const data = await res.json();
@@ -126,7 +147,7 @@ export default function CustomerMenuPage() {
   return (
     <ErrorBoundary>
     <PageTransition>
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 md:p-6 font-sans">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 md:p-6">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-4">
           <div>
@@ -185,6 +206,13 @@ export default function CustomerMenuPage() {
           </button>
         </div>
 
+        {creatingSequence && (
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6 mb-8 text-center">
+            <div className="h-8 w-8 mx-auto mb-3 animate-spin rounded-full border-2 border-zinc-700 border-t-purple-500"></div>
+            <p className="text-xs text-zinc-400">Guest Alchemist is crafting your personal dining sequence...</p>
+          </div>
+        )}
+
         {createdSequence && !orderId && (
           <div className="rounded-2xl border border-purple-500/30 bg-purple-500/5 p-6 mb-8 backdrop-blur-md">
             <div className="flex justify-between items-center mb-4">
@@ -207,6 +235,13 @@ export default function CustomerMenuPage() {
                 <div className="font-semibold text-white mt-1">{(createdSequence.main as Record<string, string>).name}</div>
                 <div className="text-xs text-zinc-400 mt-0.5">Station: {(createdSequence.main as Record<string, string>).station} | Est: {(createdSequence.main as Record<string, string>).timing}</div>
               </div>
+              {!!createdSequence.drink && (
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-4">
+                  <div className="text-[11px] text-blue-400 font-bold uppercase tracking-wider">Drink Pairing</div>
+                  <div className="font-semibold text-white mt-1">{(createdSequence.drink as Record<string, string>).name}</div>
+                  <div className="text-xs text-zinc-400 mt-0.5">Est: {(createdSequence.drink as Record<string, string>).timing}</div>
+                </div>
+              )}
             </div>
             <button
               onClick={handleSubmitOrder}

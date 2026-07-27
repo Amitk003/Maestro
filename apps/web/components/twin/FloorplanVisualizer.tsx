@@ -92,7 +92,7 @@ export const FloorplanVisualizer: React.FC<FloorplanProps> = ({ tables, stations
                   fontSize="13"
                   fontWeight="bold"
                 >
-                  {t.id}
+                  {`T${t.id.slice(-4).toUpperCase()}`}
                 </text>
                 <text
                   x={t.position_x + 35}
@@ -113,7 +113,7 @@ export const FloorplanVisualizer: React.FC<FloorplanProps> = ({ tables, stations
       {selectedTable && (
         <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-xs">
           <div className="flex justify-between items-center mb-2">
-            <h4 className="font-bold text-white text-sm">Table {selectedTable.id} Details</h4>
+            <h4 className="font-bold text-white text-sm">Table T{selectedTable.id.slice(-4).toUpperCase()} Details</h4>
             <button onClick={() => setSelectedTable(null)} className="text-zinc-500 hover:text-white">Close</button>
           </div>
           <div className="grid grid-cols-3 gap-2 text-zinc-300">

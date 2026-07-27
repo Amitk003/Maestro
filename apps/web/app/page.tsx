@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <ErrorBoundary>
     <PageTransition>
-    <div className="flex min-h-screen flex-col bg-zinc-950 text-zinc-100 selection:bg-rose-500 selection:text-white relative overflow-hidden font-sans">
+    <div className="flex min-h-screen flex-col bg-zinc-950 text-zinc-100 selection:bg-rose-500 selection:text-white relative overflow-hidden">
       {/* Subtle Ambient Radial Glows */}
       <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-rose-600/10 blur-[140px]" />
       <div className="pointer-events-none absolute top-96 -left-40 h-[400px] w-[600px] rounded-full bg-purple-600/10 blur-[120px]" />
