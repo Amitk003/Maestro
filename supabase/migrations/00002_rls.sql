@@ -104,7 +104,7 @@ create policy "Customers can view own orders"
   );
 
 create policy "Customers can create orders"
-  on orders for insert with true;
+  on orders for insert with check (true);
 
 create policy "Staff can update orders"
   on orders for update using (
@@ -133,4 +133,4 @@ create policy "Agent logs viewable by staff"
   );
 
 create policy "Agent logs insertable by system"
-  on agent_logs for insert with true;
+  on agent_logs for insert with check (true);
