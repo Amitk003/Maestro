@@ -13,8 +13,11 @@ export async function signInWithOtp(email: string) {
 
 export async function signInWithPassword(email: string, password: string) {
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  return { error };
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (!error && data?.session) {
+    await supabase.auth.getSession();
+  }
+  return { error, session: data?.session ?? null };
 }
 
 export async function signInWithGoogle() {
