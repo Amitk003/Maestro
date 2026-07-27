@@ -104,8 +104,8 @@ export default function CustomerMenuPage() {
           type: 'dine_in',
           notes: createdSequence.vibe as string,
           items: [
-            { menu_item_id: 'mi000000-0000-0000-0000-000000000003', quantity: 1, station_id: 'st000000-0000-0000-0000-000000000003' },
-            { menu_item_id: 'mi000000-0000-0000-0000-000000000002', quantity: 1, station_id: 'st000000-0000-0000-0000-000000000002' },
+            { menu_item_id: 'e0000000-0000-0000-0000-000000000003', quantity: 1, station_id: 'c0000000-0000-0000-0000-000000000003' },
+            { menu_item_id: 'e0000000-0000-0000-0000-000000000002', quantity: 1, station_id: 'c0000000-0000-0000-0000-000000000002' },
           ],
         }),
       });

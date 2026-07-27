@@ -60,10 +60,10 @@ export default function Home() {
 
         {/* Nav Links Desktop */}
         <div className="hidden md:flex items-center gap-3 text-xs font-medium">
-          <Link href="/customer/menu" className="text-zinc-400 hover:text-white transition-colors">Guest Portal</Link>
-          <Link href="/staff/tasks" className="text-zinc-400 hover:text-white transition-colors">Staff UI</Link>
-          <Link href="/staff/kds" className="text-zinc-400 hover:text-white transition-colors">KDS</Link>
-          <Link href="/manager/dashboard" className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-zinc-950 hover:bg-zinc-200 transition-all shadow-sm">
+          <Link href="/menu" className="text-zinc-400 hover:text-white transition-colors">Guest Portal</Link>
+          <Link href="/tasks" className="text-zinc-400 hover:text-white transition-colors">Staff UI</Link>
+          <Link href="/kds" className="text-zinc-400 hover:text-white transition-colors">KDS</Link>
+          <Link href="/dashboard" className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-zinc-950 hover:bg-zinc-200 transition-all shadow-sm">
             Manager Twin
           </Link>
         </div>
@@ -86,10 +86,10 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           className="md:hidden border-b border-zinc-900/80 bg-zinc-950/95 backdrop-blur-xl px-6 py-4 flex flex-col gap-3 text-sm"
         >
-          <Link href="/customer/menu" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-white transition-colors">Guest Portal</Link>
-          <Link href="/staff/tasks" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-white transition-colors">Staff UI</Link>
-          <Link href="/staff/kds" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-white transition-colors">KDS</Link>
-          <Link href="/manager/dashboard" onClick={() => setMobileMenuOpen(false)} className="rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-zinc-950 hover:bg-zinc-200 transition-all inline-block text-center">
+          <Link href="/menu" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-white transition-colors">Guest Portal</Link>
+          <Link href="/tasks" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-white transition-colors">Staff UI</Link>
+          <Link href="/kds" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-white transition-colors">KDS</Link>
+          <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-zinc-950 hover:bg-zinc-200 transition-all inline-block text-center">
             Manager Twin
           </Link>
         </motion.div>
@@ -131,7 +131,7 @@ export default function Home() {
             <span>SIMULATE PEAK-HOUR CRISIS</span>
           </button>
           <Link
-            href="/manager/dashboard"
+            href="/dashboard"
             className="rounded-xl border border-zinc-800 bg-zinc-900/80 px-7 py-3.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800 hover:border-zinc-700 transition-all flex items-center gap-2"
           >
             <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -152,7 +152,7 @@ export default function Home() {
             variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
           >
           <Link
-            href="/customer/menu"
+            href="/menu"
             className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 hover:border-purple-500/40 hover:bg-zinc-900/80 backdrop-blur-sm transition-all duration-300 shadow-lg block"
           >
             <div className="h-11 w-11 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-purple-500/20 transition-all">
@@ -171,7 +171,7 @@ export default function Home() {
             variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
           >
           <Link
-            href="/staff/tasks"
+            href="/tasks"
             className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 hover:border-amber-500/40 hover:bg-zinc-900/80 backdrop-blur-sm transition-all duration-300 shadow-lg block"
           >
             <div className="h-11 w-11 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-amber-500/20 transition-all">
@@ -190,7 +190,7 @@ export default function Home() {
             variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
           >
           <Link
-            href="/manager/dashboard"
+            href="/dashboard"
             className="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 hover:border-rose-500/40 hover:bg-zinc-900/80 backdrop-blur-sm transition-all duration-300 shadow-lg block"
           >
             <div className="h-11 w-11 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-rose-500/20 transition-all">
