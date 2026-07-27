@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { signInWithOtp, signInWithGoogle } from '../../../lib/auth';
 import { PageTransition } from '../../../components/ui/PageTransition';
 
-export default function LoginPage() {
+function LoginForm() {
   const searchParams = useSearchParams();
   const errorParam = searchParams.get('error');
   const [mode, setMode] = useState<'magic' | 'password'>('password');
@@ -127,5 +127,13 @@ export default function LoginPage() {
         </div>
       </div>
     </PageTransition>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-950" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

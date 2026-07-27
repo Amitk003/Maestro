@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Maestro Hackathon PPT Filler
-Fills slides 2-6 with project details, flowcharts, diagrams, and professional styling.
-No emojis. No em dashes. Clean, technical, visually impressive.
+Maestro Hackathon PPT - Professional Redesign
+Clean typography, strict grid, high contrast, node-based diagrams.
+No emojis, no em dashes, no AI aesthetics.
 """
 
 from pptx import Presentation
@@ -10,649 +10,654 @@ from pptx.util import Inches, Pt, Emu
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.dml.color import RGBColor
-from pptx.oxml.ns import qn
 import os
 
-# ── Color Palette (Professional Dark Theme) ──────────────────────────────────
-BG_DARK      = RGBColor(0x0F, 0x17, 0x2A)  # Deep navy
-BG_CARD      = RGBColor(0x16, 0x21, 0x3E)  # Card background
-ACCENT_BLUE  = RGBColor(0x38, 0xBD, 0xF8)  # Bright blue
-ACCENT_GREEN = RGBColor(0x4A, 0xDE, 0x80)  # Green
-ACCENT_PURPLE= RGBColor(0xA7, 0x8B, 0xFA)  # Purple
-ACCENT_ORANGE= RGBColor(0xFB, 0x92, 0x3C)  # Orange
-ACCENT_PINK  = RGBColor(0xF4, 0x72, 0xB6)  # Pink
-ACCENT_CYAN  = RGBColor(0x22, 0xD3, 0xEE)  # Cyan
-TEXT_WHITE    = RGBColor(0xFF, 0xFF, 0xFF)
-TEXT_LIGHT    = RGBColor(0xCB, 0xD5, 0xE1)  # Light gray
-TEXT_DIM      = RGBColor(0x94, 0xA3, 0xB8)  # Dimmed text
-BORDER_COLOR  = RGBColor(0x33, 0x44, 0x6B)  # Subtle border
-GRADIENT_START= RGBColor(0x1E, 0x29, 0x3B)
-GRADIENT_END  = RGBColor(0x0F, 0x17, 0x2A)
+# ── Design System ────────────────────────────────────────────────────────────
+# Backgrounds
+BG_PRIMARY   = RGBColor(0x0A, 0x0A, 0x0A)  # Pure dark
+BG_CARD      = RGBColor(0x14, 0x14, 0x14)  # Card surface
+BG_ELEVATED  = RGBColor(0x1A, 0x1A, 0x1A)  # Elevated surface
 
-# ── Slide dimensions (13.33 x 7.5 inches) ───────────────────────────────────
-SLIDE_W = Inches(13.333)
-SLIDE_H = Inches(7.5)
+# Accent Colors (single strong accent)
+ACCENT       = RGBColor(0x3B, 0x82, 0xF6)  # Blue-500
+ACCENT_LIGHT = RGBColor(0x60, 0xA5, 0xFA)  # Blue-400
+ACCENT_DIM   = RGBColor(0x1E, 0x3A, 0x5F)  # Blue-900
+
+# Semantic
+SUCCESS      = RGBColor(0x22, 0xC5, 0x5E)  # Green
+WARNING      = RGBColor(0xF5, 0x9E, 0x0B)  # Amber
+DANGER       = RGBColor(0xEF, 0x44, 0x44)  # Red
+PURPLE       = RGBColor(0xA7, 0x8B, 0xFA)  # Violet
+CYAN         = RGBColor(0x06, 0xB6, 0xD4)  # Cyan
+ORANGE       = RGBColor(0xF9, 0x73, 0x16)  # Orange
+PINK         = RGBColor(0xEC, 0x48, 0x99)  # Pink
+
+# Text
+TEXT_PRIMARY   = RGBColor(0xFF, 0xFF, 0xFF)
+TEXT_SECONDARY = RGBColor(0xA1, 0xA1, 0xAA)  # Zinc-400
+TEXT_MUTED     = RGBColor(0x52, 0x52, 0x5B)  # Zinc-600
+
+# Borders
+BORDER       = RGBColor(0x27, 0x27, 0x2A)  # Zinc-800
+BORDER_LIGHT = RGBColor(0x3F, 0x3F, 0x46)  # Zinc-700
+
+# Typography
+FONT = 'Calibri'
+
+# Slide dimensions
+W = Inches(13.333)
+H = Inches(7.5)
 
 PPTX_PATH = '../Vibeathon_6.0_Vibecoding_Hackathon_July_2026_Idea_Submission_Template.pptx'
-OUTPUT_PATH = '../Maestro_Hackathon_Submission_v2.pptx'
+OUTPUT_PATH = '../Maestro_Hackathon_Final.pptx'
 
 
-def set_slide_bg(slide, color):
-    """Set solid background color for a slide."""
-    background = slide.background
-    fill = background.fill
+# ── Helper Functions ─────────────────────────────────────────────────────────
+
+def set_bg(slide, color=BG_PRIMARY):
+    bg = slide.background
+    fill = bg.fill
     fill.solid()
     fill.fore_color.rgb = color
 
 
-def add_shape(slide, shape_type, left, top, width, height, fill_color=None, line_color=None, line_width=Pt(1)):
-    """Add a shape with optional fill and border."""
-    shape = slide.shapes.add_shape(shape_type, left, top, width, height)
-    shape.line.width = line_width
-    if fill_color:
-        shape.fill.solid()
-        shape.fill.fore_color.rgb = fill_color
-    else:
-        shape.fill.background()
-    if line_color:
-        shape.line.color.rgb = line_color
-    else:
-        shape.line.fill.background()
-    return shape
+def clear_slide(slide):
+    """Remove all shapes except the 3 logo images (top-left, top-right, center background)."""
+    logos = []
+    for shape in slide.shapes:
+        if shape.shape_type != 13:
+            continue
+        l = shape.left / 914400
+        t = shape.top / 914400
+        w = shape.width / 914400
+        # Top-left logo
+        if l < 0.3 and t < 0.3 and w > 1.0:
+            logos.append(shape)
+        # Top-right logo
+        elif l > 11.0 and t < 0.3 and w > 0.5:
+            logos.append(shape)
+        # Center background
+        elif 3.5 < l < 5.0 and 1.0 < t < 3.0 and w > 3.0:
+            logos.append(shape)
+    for shape in list(slide.shapes):
+        if shape not in logos:
+            shape._element.getparent().remove(shape._element)
 
 
-def add_rounded_rect(slide, left, top, width, height, fill_color=None, line_color=None):
-    """Add a rounded rectangle."""
-    shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height)
-    if fill_color:
-        shape.fill.solid()
-        shape.fill.fore_color.rgb = fill_color
+def rect(slide, x, y, w, h, fill=None, border=None, border_w=Pt(1)):
+    s = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, y, w, h)
+    if fill:
+        s.fill.solid()
+        s.fill.fore_color.rgb = fill
     else:
-        shape.fill.background()
-    if line_color:
-        shape.line.color.rgb = line_color
-        shape.line.width = Pt(1.5)
+        s.fill.background()
+    if border:
+        s.line.color.rgb = border
+        s.line.width = border_w
     else:
-        shape.line.fill.background()
-    return shape
+        s.line.fill.background()
+    return s
 
 
-def add_text_box(slide, left, top, width, height, text, font_size=14, color=TEXT_WHITE,
-                 bold=False, alignment=PP_ALIGN.LEFT, font_name='Calibri'):
-    """Add a text box with specified formatting."""
-    txBox = slide.shapes.add_textbox(left, top, width, height)
-    tf = txBox.text_frame
+def rounded(slide, x, y, w, h, fill=None, border=None, border_w=Pt(1)):
+    s = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h)
+    if fill:
+        s.fill.solid()
+        s.fill.fore_color.rgb = fill
+    else:
+        s.fill.background()
+    if border:
+        s.line.color.rgb = border
+        s.line.width = border_w
+    else:
+        s.line.fill.background()
+    return s
+
+
+def oval(slide, x, y, w, h, fill=None, border=None):
+    s = slide.shapes.add_shape(MSO_SHAPE.OVAL, x, y, w, h)
+    if fill:
+        s.fill.solid()
+        s.fill.fore_color.rgb = fill
+    else:
+        s.fill.background()
+    if border:
+        s.line.color.rgb = border
+        s.line.width = Pt(1.5)
+    else:
+        s.line.fill.background()
+    return s
+
+
+def text(slide, x, y, w, h, content, size=14, color=TEXT_PRIMARY, bold=False, align=PP_ALIGN.LEFT):
+    tb = slide.shapes.add_textbox(x, y, w, h)
+    tf = tb.text_frame
     tf.word_wrap = True
     p = tf.paragraphs[0]
-    p.text = text
-    p.font.size = Pt(font_size)
+    p.text = content
+    p.font.size = Pt(size)
     p.font.color.rgb = color
     p.font.bold = bold
-    p.font.name = font_name
-    p.alignment = alignment
-    return txBox
+    p.font.name = FONT
+    p.alignment = align
+    return tb
 
 
-def add_arrow_down(slide, x, y, width=Inches(0.3), height=Inches(0.4), color=ACCENT_BLUE):
-    """Add a down-pointing arrow."""
-    shape = slide.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, x, y, width, height)
-    shape.fill.solid()
-    shape.fill.fore_color.rgb = color
-    shape.line.fill.background()
-    return shape
+def label(slide, x, y, w, content, size=11, color=TEXT_SECONDARY):
+    return text(slide, x, y, w, Inches(0.3), content, size=size, color=color)
 
 
-def add_connector_line(slide, x1, y1, x2, y2, color=ACCENT_BLUE, width=Pt(2)):
-    """Add a line connector between two points."""
-    from pptx.oxml.ns import qn
-    connector = slide.shapes.add_connector(1, x1, y1, x2, y2)  # MSO_CONNECTOR.STRAIGHT
-    connector.line.color.rgb = color
-    connector.line.width = width
-    return connector
+def heading(slide, x, y, w, content, size=28):
+    return text(slide, x, y, w, Inches(0.6), content, size=size, bold=True)
 
 
-def create_flow_box(slide, left, top, width, height, text, fill_color=BG_CARD, border_color=ACCENT_BLUE,
-                    text_color=TEXT_WHITE, font_size=11):
-    """Create a styled flow box with text."""
-    shape = add_rounded_rect(slide, left, top, width, height, fill_color, border_color)
-    tf = shape.text_frame
-    tf.word_wrap = True
+def card(slide, x, y, w, h, fill=BG_CARD, border=BORDER):
+    return rounded(slide, x, y, w, h, fill=fill, border=border)
+
+
+def divider(slide, x, y, w, color=BORDER):
+    return rect(slide, x, y, w, Pt(1), fill=color)
+
+
+def arrow_right(slide, x, y, w=Inches(0.4), h=Inches(0.25), color=ACCENT):
+    s = slide.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, x, y, w, h)
+    s.fill.solid()
+    s.fill.fore_color.rgb = color
+    s.line.fill.background()
+    return s
+
+
+def arrow_down(slide, x, y, w=Inches(0.2), h=Inches(0.35), color=ACCENT):
+    s = slide.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, x, y, w, h)
+    s.fill.solid()
+    s.fill.fore_color.rgb = color
+    s.line.fill.background()
+    return s
+
+
+def step_circle(slide, x, y, num, color=ACCENT):
+    c = oval(slide, x, y, Inches(0.45), Inches(0.45), fill=color)
+    tf = c.text_frame
+    tf.paragraphs[0].text = str(num)
+    tf.paragraphs[0].font.size = Pt(14)
+    tf.paragraphs[0].font.color.rgb = TEXT_PRIMARY
+    tf.paragraphs[0].font.bold = True
+    tf.paragraphs[0].font.name = FONT
     tf.paragraphs[0].alignment = PP_ALIGN.CENTER
-    p = tf.paragraphs[0]
-    p.text = text
-    p.font.size = Pt(font_size)
-    p.font.color.rgb = text_color
-    p.font.name = 'Calibri'
-    p.font.bold = True
-    shape.text_frame.margin_left = Pt(6)
-    shape.text_frame.margin_right = Pt(6)
-    shape.text_frame.margin_top = Pt(4)
-    shape.text_frame.margin_bottom = Pt(4)
-    return shape
-
-
-def create_icon_box(slide, left, top, width, height, icon_char, label, fill_color, text_color=TEXT_WHITE):
-    """Create a box with icon character and label."""
-    shape = add_rounded_rect(slide, left, top, width, height, fill_color, None)
-    tf = shape.text_frame
-    tf.word_wrap = True
-    tf.paragraphs[0].alignment = PP_ALIGN.CENTER
-    
-    # Icon
-    p = tf.paragraphs[0]
-    p.text = icon_char
-    p.font.size = Pt(24)
-    p.font.color.rgb = text_color
-    p.font.name = 'Calibri'
-    p.font.bold = True
-    
-    # Label
-    p2 = tf.add_paragraph()
-    p2.text = label
-    p2.font.size = Pt(9)
-    p2.font.color.rgb = TEXT_LIGHT
-    p2.font.name = 'Calibri'
-    p2.alignment = PP_ALIGN.CENTER
-    
-    return shape
+    return c
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SLIDE 2: Current Problem
 # ══════════════════════════════════════════════════════════════════════════════
-# Logo detection thresholds (template-specific)
-LOGO_LEFT_MAX_X = 0.3
-LOGO_LEFT_MAX_Y = 0.3
-LOGO_LEFT_MIN_W = 1.0
-LOGO_RIGHT_MIN_X = 11.0
-LOGO_RIGHT_MAX_Y = 0.3
-LOGO_RIGHT_MIN_W = 0.5
-BG_CENTER_MIN_X = 3.5
-BG_CENTER_MAX_X = 5.0
-BG_CENTER_MIN_Y = 1.0
-BG_CENTER_MAX_Y = 3.0
-BG_CENTER_MIN_W = 3.0
-
-def clear_slide(slide):
-    """Remove all shapes from a slide, preserving the 3 logo images (top-left, top-right, center background)."""
-    logo_shapes = []
-    for shape in slide.shapes:
-        if shape.shape_type != 13:  # Not a picture
-            continue
-        left_in = shape.left / 914400
-        top_in = shape.top / 914400
-        w_in = shape.width / 914400
-        
-        is_logo = False
-        # Top-left logo (event branding)
-        if left_in < LOGO_LEFT_MAX_X and top_in < LOGO_LEFT_MAX_Y and w_in > LOGO_LEFT_MIN_W:
-            is_logo = True
-        # Top-right logo (corner icon)
-        elif left_in > LOGO_RIGHT_MIN_X and top_in < LOGO_RIGHT_MAX_Y and w_in > LOGO_RIGHT_MIN_W:
-            is_logo = True
-        # Center background graphic (watermark)
-        elif BG_CENTER_MIN_X < left_in < BG_CENTER_MAX_X and BG_CENTER_MIN_Y < top_in < BG_CENTER_MAX_Y and w_in > BG_CENTER_MIN_W:
-            is_logo = True
-        
-        if is_logo:
-            logo_shapes.append(shape)
-    
-    for shape in list(slide.shapes):
-        if shape in logo_shapes:
-            continue
-        sp = shape._element
-        sp.getparent().remove(sp)
-
-
 def fill_slide_2(slide):
-    """Fill Slide 2: Current Problem."""
-    set_slide_bg(slide, BG_DARK)
+    set_bg(slide)
     clear_slide(slide)
-    
-    # ── Title ──
-    add_text_box(slide, Inches(0.8), Inches(0.4), Inches(11), Inches(0.7),
-                 "Current Problem", font_size=32, color=TEXT_WHITE, bold=True)
-    
-    # Subtitle line
-    add_text_box(slide, Inches(0.8), Inches(1.0), Inches(8), Inches(0.4),
-                 "Why restaurants need a fundamentally different approach", font_size=14, color=TEXT_DIM)
-    
-    # ── Left Column: Problem Cards ──
+
+    # ── Left Column: Title + Problem Cards ──
+    heading(slide, Inches(0.8), Inches(0.5), Inches(5.5), "Current Problem")
+    label(slide, Inches(0.8), Inches(1.0), Inches(5.5),
+          "Why the restaurant industry needs a fundamentally different approach")
+
+    divider(slide, Inches(0.8), Inches(1.5), Inches(5.5))
+
     problems = [
-        ("Reactive Systems", "Ticket printers, manual coordination, and yelling are the backbone of most restaurant operations. Problems are only addressed after they occur, leading to cascading failures.", ACCENT_ORANGE),
-        ("Information Silos", "Kitchen, front-of-house, inventory, and management operate in disconnected loops. No one has a complete picture of restaurant state at any given moment.", ACCENT_PINK),
-        ("Waste & Inefficiency", "Ingredients spoil before use. Kitchen stations become bottlenecks while others sit idle. Staff burn out from poor task distribution. Tables sit dirty while waiters are overwhelmed.", ACCENT_PURPLE),
-        ("No Predictive Capability", "Existing systems cannot anticipate demand surges from weather, local events, or time patterns. Restaurants are always caught off-guard.", ACCENT_CYAN),
+        ("Reactive Operations",
+         "Ticket printers, manual coordination, and verbal communication are the backbone of most restaurant operations. Problems are addressed only after they occur.",
+         DANGER),
+        ("Information Silos",
+         "Kitchen, front-of-house, inventory, and management operate in disconnected loops. No one has complete visibility into restaurant state.",
+         WARNING),
+        ("Waste & Inefficiency",
+         "Ingredients spoil before use. Stations become bottlenecks while others sit idle. Staff burn out from poor task distribution.",
+         PINK),
+        ("No Prediction",
+         "Existing systems cannot anticipate demand surges from weather, events, or time patterns. Restaurants are always caught off-guard.",
+         PURPLE),
     ]
-    
-    card_y = Inches(1.6)
-    for i, (title, desc, accent) in enumerate(problems):
-        y = card_y + Inches(i * 1.35)
-        # Card background
-        card = add_rounded_rect(slide, Inches(0.8), y, Inches(5.8), Inches(1.2), BG_CARD, BORDER_COLOR)
-        
-        # Accent bar on left
-        add_shape(slide, MSO_SHAPE.RECTANGLE, Inches(0.8), y, Inches(0.06), Inches(1.2), fill_color=accent)
-        
-        # Title
-        add_text_box(slide, Inches(1.1), y + Inches(0.08), Inches(5.3), Inches(0.35),
-                     title, font_size=14, color=accent, bold=True)
-        
-        # Description
-        add_text_box(slide, Inches(1.1), y + Inches(0.42), Inches(5.3), Inches(0.75),
-                     desc, font_size=10, color=TEXT_LIGHT)
-    
-    # ── Right Column: Impact Metrics ──
-    add_text_box(slide, Inches(7.2), Inches(1.6), Inches(5), Inches(0.4),
-                 "Industry Impact", font_size=18, color=TEXT_WHITE, bold=True)
-    
+
+    y = Inches(1.75)
+    for title, desc, color in problems:
+        c = card(slide, Inches(0.8), y, Inches(5.5), Inches(1.15))
+        rect(slide, Inches(0.8), y, Pt(4), Inches(1.15), fill=color)
+        text(slide, Inches(1.1), y + Inches(0.1), Inches(5.1), Inches(0.3),
+             title, size=13, color=color, bold=True)
+        text(slide, Inches(1.1), y + Inches(0.45), Inches(5.1), Inches(0.6),
+             desc, size=10, color=TEXT_SECONDARY)
+        y += Inches(1.3)
+
+    # ── Right Column: Impact Metrics (Large Typography) ──
+    text(slide, Inches(7.2), Inches(0.5), Inches(5), Inches(0.5),
+         "Industry Impact", size=20, bold=True)
+
+    divider(slide, Inches(7.2), Inches(1.1), Inches(5))
+
     metrics = [
         ("$200B+", "Annual food waste in US restaurants"),
-        ("30%", "Average kitchen idle time during peak"),
+        ("30%", "Average kitchen idle time during peak hours"),
         ("4.2x", "Higher staff turnover vs. tech industry"),
     ]
-    
-    metric_y = Inches(2.2)
-    for i, (value, label) in enumerate(metrics):
-        y = metric_y + Inches(i * 1.1)
-        card = add_rounded_rect(slide, Inches(7.2), y, Inches(5.2), Inches(0.95), BG_CARD, BORDER_COLOR)
-        add_text_box(slide, Inches(7.5), y + Inches(0.1), Inches(2), Inches(0.5),
-                     value, font_size=28, color=ACCENT_BLUE, bold=True)
-        add_text_box(slide, Inches(7.5), y + Inches(0.55), Inches(4.5), Inches(0.35),
-                     label, font_size=12, color=TEXT_LIGHT)
-    
+
+    y = Inches(1.4)
+    for value, label_text in metrics:
+        c = card(slide, Inches(7.2), y, Inches(5), Inches(1.3))
+        text(slide, Inches(7.5), y + Inches(0.15), Inches(4.4), Inches(0.7),
+             value, size=42, color=ACCENT, bold=True)
+        text(slide, Inches(7.5), y + Inches(0.85), Inches(4.4), Inches(0.35),
+             label_text, size=12, color=TEXT_SECONDARY)
+        y += Inches(1.5)
+
     # ── Bottom: Affected Stakeholders ──
-    add_text_box(slide, Inches(7.2), Inches(5.6), Inches(5), Inches(0.3),
-                 "Who Is Affected", font_size=14, color=TEXT_DIM, bold=True)
-    
-    stakeholders = ["Customers", "Kitchen Staff", "Wait Staff", "Managers", "Owners"]
+    text(slide, Inches(7.2), Inches(5.9), Inches(5), Inches(0.3),
+         "Who Is Affected", size=12, color=TEXT_MUTED, bold=True)
+
+    stakeholders = ["Customers", "Kitchen", "Wait Staff", "Managers", "Owners"]
     for i, name in enumerate(stakeholders):
-        x = Inches(7.2) + Inches(i * 1.05)
-        create_flow_box(slide, x, Inches(5.95), Inches(0.95), Inches(0.5), name,
-                       fill_color=BG_CARD, border_color=ACCENT_BLUE, font_size=9)
+        x = Inches(7.2) + Inches(i * 1.02)
+        c = rounded(slide, x, Inches(6.25), Inches(0.9), Inches(0.45), fill=BG_ELEVATED, border=BORDER)
+        tf = c.text_frame
+        tf.paragraphs[0].text = name
+        tf.paragraphs[0].font.size = Pt(9)
+        tf.paragraphs[0].font.color.rgb = TEXT_SECONDARY
+        tf.paragraphs[0].font.name = FONT
+        tf.paragraphs[0].alignment = PP_ALIGN.CENTER
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SLIDE 3: Proposed Solution
+# SLIDE 3: Proposed Solution (Node-Based Agent Diagram)
 # ══════════════════════════════════════════════════════════════════════════════
 def fill_slide_3(slide):
-    """Fill Slide 3: Proposed Solution."""
-    set_slide_bg(slide, BG_DARK)
+    set_bg(slide)
     clear_slide(slide)
-    
-    # ── Title ──
-    add_text_box(slide, Inches(0.8), Inches(0.4), Inches(11), Inches(0.7),
-                 "Proposed Solution", font_size=32, color=TEXT_WHITE, bold=True)
-    
-    add_text_box(slide, Inches(0.8), Inches(1.0), Inches(10), Inches(0.4),
-                 "Maestro: An AI-Powered Restaurant Digital Twin with Multi-Agent Coordination",
-                 font_size=14, color=TEXT_DIM)
-    
-    # ── Central Concept Box ──
-    concept_box = add_rounded_rect(slide, Inches(3.5), Inches(1.6), Inches(6.3), Inches(1.0),
-                                   BG_CARD, ACCENT_BLUE)
-    add_text_box(slide, Inches(3.7), Inches(1.7), Inches(5.9), Inches(0.35),
-                 "Core Innovation", font_size=16, color=ACCENT_BLUE, bold=True, alignment=PP_ALIGN.CENTER)
-    add_text_box(slide, Inches(3.7), Inches(2.05), Inches(5.9), Inches(0.45),
-                 "Six autonomous AI agents continuously monitor, predict, and optimize every aspect of restaurant operations through a living digital twin.",
-                 font_size=11, color=TEXT_LIGHT, alignment=PP_ALIGN.CENTER)
-    
-    # ── Six Agent Boxes (2 rows of 3) ──
+
+    heading(slide, Inches(0.8), Inches(0.4), Inches(11), "Proposed Solution")
+    label(slide, Inches(0.8), Inches(0.9), Inches(11),
+          "Maestro: An AI-Powered Restaurant Digital Twin with Multi-Agent Coordination")
+
+    divider(slide, Inches(0.8), Inches(1.3), Inches(11.7))
+
+    # ── Central Orchestrator Hub ──
+    cx = Inches(5.6)
+    cy = Inches(3.0)
+    hub_r = Inches(1.1)
+    hub = oval(slide, cx, cy, hub_r, hub_r, fill=ACCENT, border=ACCENT_LIGHT)
+    tf = hub.text_frame
+    tf.paragraphs[0].text = "Maestro"
+    tf.paragraphs[0].font.size = Pt(11)
+    tf.paragraphs[0].font.color.rgb = TEXT_PRIMARY
+    tf.paragraphs[0].font.bold = True
+    tf.paragraphs[0].font.name = FONT
+    tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+    p2 = tf.add_paragraph()
+    p2.text = "Orchestrator"
+    p2.font.size = Pt(9)
+    p2.font.color.rgb = RGBColor(0xBF, 0xDB, 0xFE)
+    p2.font.name = FONT
+    p2.alignment = PP_ALIGN.CENTER
+
+    # ── 5 Agent Nodes (Positioned around the hub) ──
     agents = [
-        ("Demand Seer", "Predicts demand from\nweather, events, time", ACCENT_BLUE),
-        ("Kitchen Conductor", "Balances station loads\nand routing", ACCENT_GREEN),
-        ("Inventory Guardian", "Prevents spoilage and\nwaste", ACCENT_ORANGE),
-        ("Guest Alchemist", "Personalizes customer\nexperience", ACCENT_PURPLE),
-        ("Staff Harmony", "Optimizes task assignment\nand prevents burnout", ACCENT_PINK),
-        ("Maestro Orchestrator", "Resolves conflicts and\nmaximizes global score", ACCENT_CYAN),
+        ("Demand\nSeer", Inches(2.2), Inches(1.8), ACCENT),
+        ("Kitchen\nConductor", Inches(9.0), Inches(1.8), SUCCESS),
+        ("Inventory\nGuardian", Inches(2.2), Inches(4.2), WARNING),
+        ("Guest\nAlchemist", Inches(9.0), Inches(4.2), PURPLE),
+        ("Staff\nHarmony", Inches(5.6), Inches(5.6), PINK),
     ]
-    
-    start_x = Inches(0.8)
-    start_y = Inches(2.9)
-    box_w = Inches(3.8)
-    box_h = Inches(1.0)
-    gap_x = Inches(4.1)
-    gap_y = Inches(1.2)
-    
-    for i, (name, desc, color) in enumerate(agents):
-        row = i // 3
-        col = i % 3
-        x = start_x + col * gap_x
-        y = start_y + row * gap_y
-        
-        card = add_rounded_rect(slide, x, y, box_w, box_h, BG_CARD, color)
-        
-        # Agent name
-        add_text_box(slide, x + Inches(0.15), y + Inches(0.08), box_w - Inches(0.3), Inches(0.3),
-                     name, font_size=13, color=color, bold=True)
-        
-        # Description
-        add_text_box(slide, x + Inches(0.15), y + Inches(0.4), box_w - Inches(0.3), Inches(0.55),
-                     desc, font_size=10, color=TEXT_LIGHT)
-    
-    # ── Key Benefits Bar ──
-    add_text_box(slide, Inches(0.8), Inches(5.5), Inches(3), Inches(0.3),
-                 "Key Benefits", font_size=14, color=TEXT_WHITE, bold=True)
-    
+
+    for name, ax, ay, color in agents:
+        node = rounded(slide, ax, ay, Inches(1.5), Inches(0.9), fill=BG_CARD, border=color)
+        tf = node.text_frame
+        tf.paragraphs[0].text = name
+        tf.paragraphs[0].font.size = Pt(11)
+        tf.paragraphs[0].font.color.rgb = color
+        tf.paragraphs[0].font.bold = True
+        tf.paragraphs[0].font.name = FONT
+        tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+
+    # ── Connector lines from agents to hub (simplified visual) ──
+    # Top-left to hub
+    arrow_right(slide, Inches(3.8), Inches(2.1), Inches(1.6), Inches(0.2), ACCENT_DIM)
+    # Top-right to hub (reversed - use left arrow concept)
+    s = slide.shapes.add_shape(MSO_SHAPE.LEFT_ARROW, Inches(6.8), Inches(2.1), Inches(2.0), Inches(0.2))
+    s.fill.solid()
+    s.fill.fore_color.rgb = RGBColor(0x14, 0x53, 0x2D)
+    s.line.fill.background()
+
+    # Bottom-left to hub
+    arrow_right(slide, Inches(3.8), Inches(4.5), Inches(1.6), Inches(0.2), RGBColor(0x71, 0x3F, 0x12))
+    # Bottom-right to hub
+    s = slide.shapes.add_shape(MSO_SHAPE.LEFT_ARROW, Inches(6.8), Inches(4.5), Inches(2.0), Inches(0.2))
+    s.fill.solid()
+    s.fill.fore_color.rgb = RGBColor(0x58, 0x1C, 0x87)
+    s.line.fill.background()
+
+    # Bottom agent to hub
+    arrow_down(slide, Inches(6.25), Inches(5.2), Inches(0.2), Inches(0.3), RGBColor(0x83, 0x18, 0x43))
+
+    # ── Key Benefits (Bottom) ──
+    divider(slide, Inches(0.8), Inches(6.0), Inches(11.7))
+
     benefits = [
         ("Proactive", "Act before problems occur"),
         ("Always On", "Heuristic fallback if AI is down"),
-        ("Real-Time", "5-second update cycle via WebSocket"),
+        ("Real-Time", "5-second update cycle"),
     ]
-    
+
     for i, (title, desc) in enumerate(benefits):
         x = Inches(0.8) + Inches(i * 4.1)
-        card = add_rounded_rect(slide, x, Inches(5.85), Inches(3.8), Inches(0.85), BG_CARD, BORDER_COLOR)
-        add_text_box(slide, x + Inches(0.15), Inches(5.92), Inches(3.5), Inches(0.3),
-                     title, font_size=12, color=ACCENT_GREEN, bold=True)
-        add_text_box(slide, x + Inches(0.15), Inches(6.2), Inches(3.5), Inches(0.4),
-                     desc, font_size=10, color=TEXT_LIGHT)
+        text(slide, x, Inches(6.2), Inches(3.8), Inches(0.3),
+             title, size=12, color=ACCENT, bold=True)
+        text(slide, x, Inches(6.5), Inches(3.8), Inches(0.3),
+             desc, size=10, color=TEXT_SECONDARY)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SLIDE 4: Technical Approach
+# SLIDE 4: Technical Approach (Horizontal Flowchart + Tech Stack)
 # ══════════════════════════════════════════════════════════════════════════════
 def fill_slide_4(slide):
-    """Fill Slide 4: Technical Approach with architecture diagram."""
-    set_slide_bg(slide, BG_DARK)
+    set_bg(slide)
     clear_slide(slide)
-    
-    # ── Title ──
-    add_text_box(slide, Inches(0.8), Inches(0.3), Inches(11), Inches(0.6),
-                 "Technical Approach", font_size=32, color=TEXT_WHITE, bold=True)
-    
-    # ── Architecture Diagram (Left) ──
-    add_text_box(slide, Inches(0.8), Inches(0.9), Inches(5), Inches(0.35),
-                 "System Architecture", font_size=16, color=ACCENT_BLUE, bold=True)
-    
-    # Customer Layer
-    create_flow_box(slide, Inches(1.5), Inches(1.4), Inches(4.5), Inches(0.6),
-                    "Customer / Staff / Manager Interfaces",
-                    fill_color=RGBColor(0x1E, 0x3A, 0x5F), border_color=ACCENT_BLUE, font_size=10)
-    
-    add_arrow_down(slide, Inches(3.6), Inches(2.05), Inches(0.25), Inches(0.3), ACCENT_BLUE)
-    
-    # Next.js Layer
-    create_flow_box(slide, Inches(1.5), Inches(2.4), Inches(4.5), Inches(0.6),
-                    "Next.js 15 Frontend (React 19 + Tailwind + Framer Motion)",
-                    fill_color=RGBColor(0x1E, 0x3A, 0x5F), border_color=ACCENT_GREEN, font_size=10)
-    
-    add_arrow_down(slide, Inches(3.6), Inches(3.05), Inches(0.25), Inches(0.3), ACCENT_GREEN)
-    
-    # Socket.io Layer
-    create_flow_box(slide, Inches(1.5), Inches(3.4), Inches(4.5), Inches(0.55),
-                    "Socket.io Real-Time Bridge",
-                    fill_color=RGBColor(0x2D, 0x1B, 0x3E), border_color=ACCENT_PURPLE, font_size=10)
-    
-    add_arrow_down(slide, Inches(3.6), Inches(4.0), Inches(0.25), Inches(0.3), ACCENT_PURPLE)
-    
-    # Agent Worker
-    create_flow_box(slide, Inches(1.5), Inches(4.35), Inches(4.5), Inches(0.6),
-                    "Agent Worker (Node.js + Express)",
-                    fill_color=RGBColor(0x1B, 0x2D, 0x1B), border_color=ACCENT_ORANGE, font_size=10)
-    
-    add_arrow_down(slide, Inches(3.6), Inches(5.0), Inches(0.25), Inches(0.3), ACCENT_ORANGE)
-    
-    # Digital Twin
-    create_flow_box(slide, Inches(1.5), Inches(5.35), Inches(4.5), Inches(0.6),
-                    "Digital Twin Engine (5s tick cycle)",
-                    fill_color=RGBColor(0x2D, 0x1B, 0x1B), border_color=ACCENT_PINK, font_size=10)
-    
-    # ── Right Side: Agent Decision Flow ──
-    add_text_box(slide, Inches(7.0), Inches(0.9), Inches(5), Inches(0.35),
-                 "Agent Decision Flow", font_size=16, color=ACCENT_GREEN, bold=True)
-    
-    # Flow steps
-    flow_steps = [
-        ("1", "Digital Twin State Snapshot", ACCENT_BLUE),
-        ("2", "6 Agents Analyze State", ACCENT_GREEN),
-        ("3", "Each Agent Proposes Actions", ACCENT_ORANGE),
-        ("4", "Orchestrator Scores & Resolves", ACCENT_PURPLE),
-        ("5", "Best Actions Applied to Twin", ACCENT_PINK),
-        ("6", "WebSocket Broadcast to Frontend", ACCENT_CYAN),
+
+    heading(slide, Inches(0.8), Inches(0.4), Inches(11), "Technical Approach")
+
+    divider(slide, Inches(0.8), Inches(1.0), Inches(11.7))
+
+    # ── Horizontal Step Flow (Top) ──
+    text(slide, Inches(0.8), Inches(1.2), Inches(5), Inches(0.3),
+         "Agent Decision Flow", size=14, color=ACCENT, bold=True)
+
+    steps = [
+        ("Twin\nSnapshot", ACCENT),
+        ("6 Agents\nAnalyze", SUCCESS),
+        ("Propose\nActions", WARNING),
+        ("Orchestrator\nResolves", PURPLE),
+        ("Apply to\nTwin", PINK),
+        ("Broadcast\nvia WS", CYAN),
     ]
-    
-    for i, (num, text, color) in enumerate(flow_steps):
-        y = Inches(1.4) + Inches(i * 0.75)
-        
-        # Number circle
-        circle = add_shape(slide, MSO_SHAPE.OVAL, Inches(7.0), y, Inches(0.4), Inches(0.4), fill_color=color)
-        tf = circle.text_frame
-        tf.paragraphs[0].text = num
-        tf.paragraphs[0].font.size = Pt(12)
-        tf.paragraphs[0].font.color.rgb = TEXT_WHITE
+
+    step_w = Inches(1.5)
+    step_h = Inches(1.0)
+    gap = Inches(0.35)
+    start_x = Inches(0.8)
+    start_y = Inches(1.7)
+
+    for i, (label_text, color) in enumerate(steps):
+        x = start_x + i * (step_w + gap)
+        step_circle(slide, x + Inches(0.55), start_y - Inches(0.05), i + 1, color)
+        c = rounded(slide, x, start_y + Inches(0.5), step_w, step_h, fill=BG_CARD, border=color)
+        tf = c.text_frame
+        tf.paragraphs[0].text = label_text
+        tf.paragraphs[0].font.size = Pt(10)
+        tf.paragraphs[0].font.color.rgb = TEXT_PRIMARY
         tf.paragraphs[0].font.bold = True
+        tf.paragraphs[0].font.name = FONT
         tf.paragraphs[0].alignment = PP_ALIGN.CENTER
-        
-        # Step text
-        add_text_box(slide, Inches(7.55), y + Inches(0.05), Inches(4.5), Inches(0.35),
-                     text, font_size=12, color=TEXT_LIGHT)
-        
-        # Connector line (except last)
-        if i < len(flow_steps) - 1:
-            add_connector_line(slide, Inches(7.2), y + Inches(0.45), Inches(7.2), y + Inches(0.7),
-                             color=RGBColor(0x33, 0x44, 0x6B), width=Pt(1.5))
-    
-    # ── Tech Stack Table (Bottom) ──
-    add_text_box(slide, Inches(0.8), Inches(6.2), Inches(3), Inches(0.3),
-                 "Technology Stack", font_size=14, color=TEXT_WHITE, bold=True)
-    
+
+        if i < len(steps) - 1:
+            arrow_right(slide, x + step_w + Inches(0.05), start_y + Inches(0.85),
+                       Inches(0.25), Inches(0.15), BORDER_LIGHT)
+
+    # ── Tech Stack (Bottom - Icon Cards) ──
+    divider(slide, Inches(0.8), Inches(3.6), Inches(11.7))
+
+    text(slide, Inches(0.8), Inches(3.8), Inches(5), Inches(0.3),
+         "Technology Stack", size=14, color=TEXT_SECONDARY, bold=True)
+
     techs = [
-        ("Frontend", "Next.js 15, React 19, Tailwind v4, Framer Motion"),
-        ("AI Engine", "Google Gemini (with heuristic fallback)"),
-        ("Database", "PostgreSQL via Supabase"),
-        ("Real-Time", "Socket.io + WebSocket"),
-        ("State", "Zustand (client) + In-memory (server)"),
+        ("Next.js 15", "Frontend", ACCENT),
+        ("React 19", "UI Library", CYAN),
+        ("Tailwind v4", "Styling", PURPLE),
+        ("Gemini", "AI Engine", SUCCESS),
+        ("Supabase", "Database", WARNING),
+        ("Socket.io", "Real-Time", PINK),
     ]
-    
-    for i, (category, detail) in enumerate(techs):
-        x = Inches(0.8) + Inches(i * 2.45)
-        card = add_rounded_rect(slide, x, Inches(6.55), Inches(2.3), Inches(0.7), BG_CARD, BORDER_COLOR)
-        add_text_box(slide, x + Inches(0.1), Inches(6.58), Inches(2.1), Inches(0.25),
-                     category, font_size=9, color=ACCENT_BLUE, bold=True)
-        add_text_box(slide, x + Inches(0.1), Inches(6.82), Inches(2.1), Inches(0.4),
-                     detail, font_size=8, color=TEXT_DIM)
+
+    tech_w = Inches(1.75)
+    tech_h = Inches(1.3)
+    tech_gap = Inches(0.2)
+    tech_start_x = Inches(0.8)
+    tech_y = Inches(4.3)
+
+    for i, (name, category, color) in enumerate(techs):
+        x = tech_start_x + i * (tech_w + tech_gap)
+        c = rounded(slide, x, tech_y, tech_w, tech_h, fill=BG_CARD, border=BORDER)
+
+        # Color accent dot
+        oval(slide, x + Inches(0.6), tech_y + Inches(0.2), Inches(0.15), Inches(0.15), fill=color)
+
+        text(slide, x, tech_y + Inches(0.45), tech_w, Inches(0.3),
+             name, size=13, color=TEXT_PRIMARY, bold=True, align=PP_ALIGN.CENTER)
+        text(slide, x, tech_y + Inches(0.8), tech_w, Inches(0.3),
+             category, size=10, color=TEXT_MUTED, align=PP_ALIGN.CENTER)
+
+    # ── Architecture Summary (Right Side) ──
+    arch_items = [
+        ("Frontend", "Next.js 15 + React 19 + Tailwind v4"),
+        ("Real-Time", "Socket.io WebSocket bridge"),
+        ("Agent Worker", "Node.js + Express server"),
+        ("Digital Twin", "In-memory state + 5s tick cycle"),
+        ("AI Layer", "Google Gemini + heuristic fallback"),
+        ("Database", "PostgreSQL via Supabase"),
+    ]
+
+    arch_x = Inches(0.8)
+    arch_y = Inches(5.9)
+
+    for i, (key, val) in enumerate(arch_items):
+        x = arch_x + Inches(i * 2.1)
+        text(slide, x, arch_y, Inches(1.9), Inches(0.25),
+             key, size=9, color=ACCENT, bold=True)
+        text(slide, x, arch_y + Inches(0.25), Inches(1.9), Inches(0.4),
+             val, size=8, color=TEXT_MUTED)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SLIDE 5: Use Cases & Impact
+# SLIDE 5: Use Cases & Impact (Split Column)
 # ══════════════════════════════════════════════════════════════════════════════
 def fill_slide_5(slide):
-    """Fill Slide 5: Use Cases & Impact."""
-    set_slide_bg(slide, BG_DARK)
+    set_bg(slide)
     clear_slide(slide)
-    
-    # ── Title ──
-    add_text_box(slide, Inches(0.8), Inches(0.4), Inches(11), Inches(0.7),
-                 "Use Cases & Impact", font_size=32, color=TEXT_WHITE, bold=True)
-    
-    # ── Left: Use Case Cards ──
-    add_text_box(slide, Inches(0.8), Inches(1.2), Inches(5), Inches(0.35),
-                 "Key Use Cases", font_size=16, color=ACCENT_BLUE, bold=True)
-    
+
+    heading(slide, Inches(0.8), Inches(0.4), Inches(11), "Use Cases & Impact")
+
+    divider(slide, Inches(0.8), Inches(1.0), Inches(11.7))
+
+    # ── Left: Use Cases ──
+    text(slide, Inches(0.8), Inches(1.2), Inches(5), Inches(0.3),
+         "Key Use Cases", size=14, color=ACCENT, bold=True)
+
     use_cases = [
-        ("Customer Ordering", "Guest types: '25 min, light dinner, pre-show'. Guest Alchemist parses intent, checks kitchen load, returns personalized meal sequence.", ACCENT_BLUE),
-        ("Kitchen Optimization", "Grill station hits 90% load. Kitchen Conductor auto-routes items to Saute or Cold Prep. Chefs see only relevant orders.", ACCENT_GREEN),
-        ("Crisis Response", "Storm approaches + stadium event ends. Demand Seer detects surge. Inventory Guardian flags spoilage. Orchestrator resolves all conflicts.", ACCENT_ORANGE),
-        ("Waste Prevention", "Salmon at 35% freshness. Inventory Guardian promotes Cold Salmon Tartare. 3.2kg waste prevented. Guest delight maintained.", ACCENT_PURPLE),
+        ("Customer Ordering",
+         "Guest types: '25 min, light dinner, pre-show'. Guest Alchemist parses intent, checks kitchen load, returns personalized meal sequence.",
+         ACCENT),
+        ("Kitchen Optimization",
+         "Grill station hits 90% load. Kitchen Conductor auto-routes items to Saute or Cold Prep. Chefs see only relevant orders.",
+         SUCCESS),
+        ("Crisis Response",
+         "Storm + event surge. Demand Seer detects. Inventory Guardian flags spoilage. Orchestrator resolves all conflicts.",
+         DANGER),
+        ("Waste Prevention",
+         "Salmon at 35% freshness. Inventory Guardian promotes Cold Salmon Tartare. 3.2kg waste prevented.",
+         WARNING),
     ]
-    
-    for i, (title, desc, color) in enumerate(use_cases):
-        y = Inches(1.7) + Inches(i * 1.25)
-        card = add_rounded_rect(slide, Inches(0.8), y, Inches(5.8), Inches(1.1), BG_CARD, BORDER_COLOR)
-        
-        # Accent bar
-        add_shape(slide, MSO_SHAPE.RECTANGLE, Inches(0.8), y, Inches(0.06), Inches(1.1), fill_color=color)
-        
-        add_text_box(slide, Inches(1.1), y + Inches(0.08), Inches(5.3), Inches(0.3),
-                     title, font_size=13, color=color, bold=True)
-        add_text_box(slide, Inches(1.1), y + Inches(0.4), Inches(5.3), Inches(0.65),
-                     desc, font_size=10, color=TEXT_LIGHT)
-    
-    # ── Right: Impact Metrics ──
-    add_text_box(slide, Inches(7.2), Inches(1.2), Inches(5), Inches(0.35),
-                 "Expected Impact", font_size=16, color=ACCENT_GREEN, bold=True)
-    
+
+    y = Inches(1.6)
+    for title, desc, color in use_cases:
+        c = card(slide, Inches(0.8), y, Inches(5.5), Inches(1.15))
+        rect(slide, Inches(0.8), y, Pt(4), Inches(1.15), fill=color)
+        text(slide, Inches(1.1), y + Inches(0.1), Inches(5.1), Inches(0.3),
+             title, size=13, color=color, bold=True)
+        text(slide, Inches(1.1), y + Inches(0.45), Inches(5.1), Inches(0.6),
+             desc, size=10, color=TEXT_SECONDARY)
+        y += Inches(1.3)
+
+    # ── Right: Impact Metrics (Large Typography) ──
+    text(slide, Inches(7.2), Inches(1.2), Inches(5), Inches(0.3),
+         "Expected Impact", size=14, color=SUCCESS, bold=True)
+
     impacts = [
-        ("Waste Reduction", "30-40%", "Through proactive spoilage alerts and dynamic menu promotion", ACCENT_ORANGE),
-        ("Service Speed", "25%", "Faster table turnover via intelligent routing and task prioritization", ACCENT_BLUE),
-        ("Staff Efficiency", "35%", "Reduced idle time and burnout through optimized task distribution", ACCENT_GREEN),
-        ("Guest Satisfaction", "+2.0", "Points on delight score via personalized experiences and recovery perks", ACCENT_PURPLE),
+        ("30-40%", "Waste Reduction",
+         "Proactive spoilage alerts + dynamic menu promotion", SUCCESS),
+        ("25%", "Service Speed",
+         "Intelligent routing + task prioritization", ACCENT),
+        ("35%", "Staff Efficiency",
+         "Optimized task distribution reduces burnout", PURPLE),
+        ("+2.0", "Guest Delight",
+         "Personalized experiences + recovery perks", WARNING),
     ]
-    
-    for i, (metric, value, desc, color) in enumerate(impacts):
-        y = Inches(1.7) + Inches(i * 1.25)
-        card = add_rounded_rect(slide, Inches(7.2), y, Inches(5.2), Inches(1.1), BG_CARD, BORDER_COLOR)
-        
-        # Value highlight
-        add_text_box(slide, Inches(7.4), y + Inches(0.1), Inches(1.5), Inches(0.5),
-                     value, font_size=24, color=color, bold=True)
-        
-        # Metric name
-        add_text_box(slide, Inches(9.0), y + Inches(0.12), Inches(3), Inches(0.3),
-                     metric, font_size=13, color=TEXT_WHITE, bold=True)
-        
-        # Description
-        add_text_box(slide, Inches(9.0), y + Inches(0.45), Inches(3), Inches(0.55),
-                     desc, font_size=10, color=TEXT_LIGHT)
-    
+
+    y = Inches(1.6)
+    for value, metric, desc, color in impacts:
+        c = card(slide, Inches(7.2), y, Inches(5), Inches(1.15))
+
+        text(slide, Inches(7.5), y + Inches(0.08), Inches(2), Inches(0.6),
+             value, size=36, color=color, bold=True)
+
+        text(slide, Inches(9.6), y + Inches(0.12), Inches(2.3), Inches(0.3),
+             metric, size=14, color=TEXT_PRIMARY, bold=True)
+
+        text(slide, Inches(9.6), y + Inches(0.5), Inches(2.3), Inches(0.55),
+             desc, size=10, color=TEXT_SECONDARY)
+
+        y += Inches(1.3)
+
     # ── Bottom: Target Users ──
-    add_text_box(slide, Inches(0.8), Inches(6.7), Inches(3), Inches(0.3),
-                 "Target Users", font_size=12, color=TEXT_DIM, bold=True)
-    
-    users = ["Restaurant Owners", "Kitchen Managers", "Front-of-House Staff", "Customers", "Operations Teams"]
-    for i, user in enumerate(users):
-        x = Inches(0.8) + Inches(i * 2.45)
-        create_flow_box(slide, x, Inches(7.0), Inches(2.3), Inches(0.4), user,
-                       fill_color=BG_CARD, border_color=ACCENT_CYAN, font_size=9)
+    divider(slide, Inches(0.8), Inches(6.9), Inches(11.7))
+
+    text(slide, Inches(0.8), Inches(7.0), Inches(2), Inches(0.25),
+         "Target Users", size=10, color=TEXT_MUTED, bold=True)
+
+    users = ["Owners", "Managers", "Kitchen", "Front-of-House", "Operations"]
+    for i, name in enumerate(users):
+        x = Inches(3.0) + Inches(i * 2.1)
+        c = rounded(slide, x, Inches(6.95), Inches(1.8), Inches(0.35), fill=BG_ELEVATED, border=BORDER)
+        tf = c.text_frame
+        tf.paragraphs[0].text = name
+        tf.paragraphs[0].font.size = Pt(9)
+        tf.paragraphs[0].font.color.rgb = TEXT_SECONDARY
+        tf.paragraphs[0].font.name = FONT
+        tf.paragraphs[0].alignment = PP_ALIGN.CENTER
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SLIDE 6: Future Scope & Conclusion
+# SLIDE 6: Future Scope & Conclusion (Timeline + Tagline)
 # ══════════════════════════════════════════════════════════════════════════════
 def fill_slide_6(slide):
-    """Fill Slide 6: Future Scope & Conclusion."""
-    set_slide_bg(slide, BG_DARK)
+    set_bg(slide)
     clear_slide(slide)
-    
-    # ── Title ──
-    add_text_box(slide, Inches(0.8), Inches(0.4), Inches(11), Inches(0.7),
-                 "Future Scope & Conclusion", font_size=32, color=TEXT_WHITE, bold=True)
-    
+
+    heading(slide, Inches(0.8), Inches(0.4), Inches(11), "Future Scope & Conclusion")
+
+    divider(slide, Inches(0.8), Inches(1.0), Inches(11.7))
+
     # ── Left: Future Enhancements ──
-    add_text_box(slide, Inches(0.8), Inches(1.2), Inches(5), Inches(0.35),
-                 "Future Enhancements", font_size=16, color=ACCENT_BLUE, bold=True)
-    
+    text(slide, Inches(0.8), Inches(1.2), Inches(5.5), Inches(0.3),
+         "Future Enhancements", size=14, color=ACCENT, bold=True)
+
     enhancements = [
-        ("Multi-Restaurant Federation", "Extend the digital twin to manage multiple restaurant locations with cross-location inventory sharing and demand balancing.", ACCENT_BLUE),
-        ("Advanced ML Models", "Replace heuristic fallback with trained ML models for demand prediction, spoilage forecasting, and customer preference learning.", ACCENT_GREEN),
-        ("Voice & Chat Integration", "Enable natural language ordering via voice assistants and in-app chat. Staff can interact with agents via voice commands.", ACCENT_PURPLE),
-        ("Supply Chain Integration", "Connect directly to suppliers for automated reordering, price optimization, and delivery scheduling.", ACCENT_ORANGE),
+        ("Multi-Restaurant Federation",
+         "Extend the digital twin to manage multiple locations with cross-location inventory sharing.",
+         ACCENT),
+        ("Advanced ML Models",
+         "Replace heuristic fallback with trained models for demand prediction and preference learning.",
+         SUCCESS),
+        ("Voice & Chat Integration",
+         "Natural language ordering via voice assistants and in-app chat.",
+         PURPLE),
+        ("Supply Chain Integration",
+         "Direct supplier connection for automated reordering and delivery scheduling.",
+         WARNING),
     ]
-    
-    for i, (title, desc, color) in enumerate(enhancements):
-        y = Inches(1.7) + Inches(i * 1.2)
-        card = add_rounded_rect(slide, Inches(0.8), y, Inches(5.8), Inches(1.05), BG_CARD, BORDER_COLOR)
-        add_shape(slide, MSO_SHAPE.RECTANGLE, Inches(0.8), y, Inches(0.06), Inches(1.05), fill_color=color)
-        add_text_box(slide, Inches(1.1), y + Inches(0.08), Inches(5.3), Inches(0.3),
-                     title, font_size=13, color=color, bold=True)
-        add_text_box(slide, Inches(1.1), y + Inches(0.4), Inches(5.3), Inches(0.6),
-                     desc, font_size=10, color=TEXT_LIGHT)
-    
+
+    y = Inches(1.6)
+    for title, desc, color in enhancements:
+        c = card(slide, Inches(0.8), y, Inches(5.5), Inches(1.1))
+        rect(slide, Inches(0.8), y, Pt(4), Inches(1.1), fill=color)
+        text(slide, Inches(1.1), y + Inches(0.1), Inches(5.1), Inches(0.3),
+             title, size=13, color=color, bold=True)
+        text(slide, Inches(1.1), y + Inches(0.45), Inches(5.1), Inches(0.55),
+             desc, size=10, color=TEXT_SECONDARY)
+        y += Inches(1.2)
+
     # ── Right: Conclusion ──
-    add_text_box(slide, Inches(7.2), Inches(1.2), Inches(5), Inches(0.35),
-                 "Conclusion", font_size=16, color=ACCENT_GREEN, bold=True)
-    
-    conclusion_card = add_rounded_rect(slide, Inches(7.2), Inches(1.7), Inches(5.2), Inches(2.5), BG_CARD, ACCENT_GREEN)
-    
-    conclusion_points = [
-        "Maestro fundamentally transforms restaurant operations from reactive to proactive.",
-        "Six specialized AI agents collaborate through a digital twin to optimize every aspect: demand, kitchen, inventory, guests, staff, and global coordination.",
-        "The multi-agent architecture with heuristic fallback ensures reliability even when AI services are unavailable.",
-        "Real-time updates via WebSocket provide instant visibility across all stakeholders.",
-        "The system demonstrates measurable impact: reduced waste, faster service, higher guest satisfaction, and healthier staff.",
+    text(slide, Inches(7.2), Inches(1.2), Inches(5), Inches(0.3),
+         "Conclusion", size=14, color=SUCCESS, bold=True)
+
+    conclusion = [
+        "Transforms restaurant operations from reactive to proactive.",
+        "Six specialized AI agents collaborate through a living digital twin.",
+        "Multi-agent architecture with heuristic fallback ensures reliability.",
+        "Real-time updates via WebSocket across all stakeholders.",
+        "Measurable impact: less waste, faster service, happier guests.",
     ]
-    
-    for i, point in enumerate(conclusion_points):
-        y = Inches(1.85) + Inches(i * 0.45)
-        # Bullet
-        add_shape(slide, MSO_SHAPE.OVAL, Inches(7.4), y + Inches(0.05), Inches(0.12), Inches(0.12), fill_color=ACCENT_GREEN)
-        add_text_box(slide, Inches(7.65), y, Inches(4.5), Inches(0.4),
-                     point, font_size=10, color=TEXT_LIGHT)
-    
-    # ── Scalability Roadmap (Bottom Right) ──
-    add_text_box(slide, Inches(7.2), Inches(4.5), Inches(5), Inches(0.35),
-                 "Scalability & Expansion", font_size=14, color=ACCENT_PURPLE, bold=True)
-    
-    roadmap = [
-        ("Phase 1", "Single restaurant deployment"),
-        ("Phase 2", "Multi-location federation"),
-        ("Phase 3", "Supply chain integration"),
-        ("Phase 4", "Industry-wide platform"),
+
+    y = Inches(1.6)
+    for point in conclusion:
+        # Bullet dot
+        oval(slide, Inches(7.2), y + Inches(0.06), Inches(0.1), Inches(0.1), fill=SUCCESS)
+        text(slide, Inches(7.5), y, Inches(4.5), Inches(0.35),
+             point, size=10, color=TEXT_SECONDARY)
+        y += Inches(0.4)
+
+    # ── Horizontal Timeline (Bottom) ──
+    text(slide, Inches(7.2), Inches(3.7), Inches(5), Inches(0.3),
+         "Scalability Roadmap", size=14, color=PURPLE, bold=True)
+
+    # Timeline line
+    line_y = Inches(4.6)
+    rect(slide, Inches(7.2), line_y, Inches(5), Pt(3), fill=BORDER_LIGHT)
+
+    phases = [
+        ("Phase 1", "Single restaurant", Inches(7.2)),
+        ("Phase 2", "Multi-location", Inches(8.7)),
+        ("Phase 3", "Supply chain", Inches(10.2)),
+        ("Phase 4", "Platform", Inches(11.7)),
     ]
-    
-    for i, (phase, desc) in enumerate(roadmap):
-        y = Inches(4.95) + Inches(i * 0.55)
-        
-        # Phase indicator
-        indicator = add_rounded_rect(slide, Inches(7.2), y, Inches(0.9), Inches(0.4),
-                                     fill_color=ACCENT_PURPLE if i < 2 else BG_CARD,
-                                     line_color=ACCENT_PURPLE)
-        tf = indicator.text_frame
-        tf.paragraphs[0].text = phase
-        tf.paragraphs[0].font.size = Pt(9)
-        tf.paragraphs[0].font.color.rgb = TEXT_WHITE
-        tf.paragraphs[0].font.bold = True
-        tf.paragraphs[0].alignment = PP_ALIGN.CENTER
-        
-        add_text_box(slide, Inches(8.25), y + Inches(0.05), Inches(3.5), Inches(0.3),
-                     desc, font_size=10, color=TEXT_LIGHT)
-    
-    # ── Bottom: Call to Action ──
-    cta_box = add_rounded_rect(slide, Inches(0.8), Inches(6.5), Inches(11.7), Inches(0.7),
-                               fill_color=RGBColor(0x1E, 0x3A, 0x5F), line_color=ACCENT_BLUE)
-    add_text_box(slide, Inches(1.0), Inches(6.55), Inches(11.3), Inches(0.25),
-                 "Maestro: Your Restaurant Runs Itself",
-                 font_size=18, color=ACCENT_BLUE, bold=True, alignment=PP_ALIGN.CENTER)
-    add_text_box(slide, Inches(1.0), Inches(6.85), Inches(11.3), Inches(0.3),
-                 "Less waste. Faster tables. Happier guests. Staff that do not burn out.",
-                 font_size=12, color=TEXT_LIGHT, alignment=PP_ALIGN.CENTER)
+
+    for label_text, desc, x in phases:
+        # Node on timeline
+        oval(slide, x + Inches(0.3), line_y - Inches(0.08), Inches(0.2), Inches(0.2), fill=PURPLE)
+        text(slide, x, Inches(4.85), Inches(1.2), Inches(0.3),
+             label_text, size=9, color=PURPLE, bold=True)
+        text(slide, x, Inches(5.1), Inches(1.2), Inches(0.3),
+             desc, size=8, color=TEXT_MUTED)
+
+    # ── Tagline (Center Bottom) ──
+    divider(slide, Inches(0.8), Inches(5.8), Inches(11.7))
+
+    text(slide, Inches(0.8), Inches(6.0), Inches(11.7), Inches(0.5),
+         "Maestro: Your Restaurant Runs Itself", size=24, bold=True, align=PP_ALIGN.CENTER)
+    text(slide, Inches(0.8), Inches(6.5), Inches(11.7), Inches(0.4),
+         "Less waste. Faster tables. Happier guests. Staff that do not burn out.",
+         size=14, color=TEXT_SECONDARY, align=PP_ALIGN.CENTER)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ══════════════════════════════════════════════════════════════════════════════
 def main():
-    print(f"Loading PPT: {PPTX_PATH}")
+    print(f"Loading: {PPTX_PATH}")
     prs = Presentation(PPTX_PATH)
-    
-    # Slide 1: Leave as is (title page)
-    print("Slide 1: Keeping original title page")
-    
-    # Slide 2: Current Problem
-    print("Slide 2: Filling Current Problem...")
+
+    print("Slide 1: Original title page preserved")
+    print("Slide 2: Current Problem...")
     fill_slide_2(prs.slides[1])
-    
-    # Slide 3: Proposed Solution
-    print("Slide 3: Filling Proposed Solution...")
+
+    print("Slide 3: Proposed Solution...")
     fill_slide_3(prs.slides[2])
-    
-    # Slide 4: Technical Approach
-    print("Slide 4: Filling Technical Approach...")
+
+    print("Slide 4: Technical Approach...")
     fill_slide_4(prs.slides[3])
-    
-    # Slide 5: Use Cases & Impact
-    print("Slide 5: Filling Use Cases & Impact...")
+
+    print("Slide 5: Use Cases & Impact...")
     fill_slide_5(prs.slides[4])
-    
-    # Slide 6: Future Scope & Conclusion
-    print("Slide 6: Filling Future Scope & Conclusion...")
+
+    print("Slide 6: Future Scope & Conclusion...")
     fill_slide_6(prs.slides[5])
-    
-    # Save
+
     prs.save(OUTPUT_PATH)
-    print(f"\nDone! Saved to: {OUTPUT_PATH}")
-    print(f"File size: {os.path.getsize(OUTPUT_PATH) / 1024:.1f} KB")
+    print(f"\nSaved: {OUTPUT_PATH}")
+    print(f"Size: {os.path.getsize(OUTPUT_PATH) / 1024:.1f} KB")
 
 
 if __name__ == '__main__':
