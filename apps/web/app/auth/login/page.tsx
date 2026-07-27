@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { signInWithOtp, signInWithPassword, signInWithGoogle } from '../../../lib/auth';
+import { signInWithOtp, signInWithGoogle } from '../../../lib/auth';
+import { loginWithPassword } from '../../../lib/actions/auth';
 import { PageTransition } from '../../../components/ui/PageTransition';
 
 export default function LoginPage() {
@@ -31,15 +32,16 @@ export default function LoginPage() {
     if (!email.trim() || !password.trim()) return;
     setLoading(true);
     setError(null);
-    const { error: err, session } = await signInWithPassword(email, password);
+    const formData = new FormData();
+    formData.set('email', email);
+    formData.set('password', password);
+    const { error: err } = await loginWithPassword(formData);
     if (err) {
-      setError(err.message);
-    } else if (session) {
-      window.location.href = '/dashboard';
+      setError(err);
+      setLoading(false);
     } else {
-      setError('Login failed - no session created');
+      window.location.href = '/dashboard';
     }
-    setLoading(false);
   };
 
   const handleGoogleLogin = async () => {
@@ -81,13 +83,13 @@ export default function LoginPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Email</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@restaurant.com" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                <input name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@restaurant.com" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
               </div>
 
               {mode === 'password' && (
                 <div>
                   <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Password</label>
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                  <input name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
                 </div>
               )}
 
