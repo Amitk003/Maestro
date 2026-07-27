@@ -1,16 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { signInWithOtp, signInWithGoogle } from '../../../lib/auth';
-import { loginWithPassword } from '../../../lib/actions/auth';
 import { PageTransition } from '../../../components/ui/PageTransition';
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const errorParam = searchParams.get('error');
   const [mode, setMode] = useState<'magic' | 'password'>('password');
   const [email, setEmail] = useState('test@maestro.demo');
   const [password, setPassword] = useState('password123');
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(errorParam);
   const [loading, setLoading] = useState(false);
 
   const handleMagicLink = async (e: React.FormEvent) => {
@@ -25,23 +27,6 @@ export default function LoginPage() {
       setSent(true);
     }
     setLoading(false);
-  };
-
-  const handlePasswordLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !password.trim()) return;
-    setLoading(true);
-    setError(null);
-    const formData = new FormData();
-    formData.set('email', email);
-    formData.set('password', password);
-    const { error: err } = await loginWithPassword(formData);
-    if (err) {
-      setError(err);
-      setLoading(false);
-    } else {
-      window.location.href = '/dashboard';
-    }
   };
 
   const handleGoogleLogin = async () => {
@@ -75,33 +60,49 @@ export default function LoginPage() {
               <p className="text-xs text-zinc-400 mt-1">A magic link has been sent to {email}</p>
             </div>
           ) : (
-            <form onSubmit={mode === 'magic' ? handleMagicLink : handlePasswordLogin} className="space-y-4">
+            <div className="space-y-4">
               <div className="flex rounded-xl border border-zinc-800 overflow-hidden text-xs font-medium">
                 <button type="button" onClick={() => setMode('password')} className={`flex-1 py-2.5 transition ${mode === 'password' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Password</button>
                 <button type="button" onClick={() => setMode('magic')} className={`flex-1 py-2.5 transition ${mode === 'magic' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>Magic Link</button>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Email</label>
-                <input name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@restaurant.com" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
-              </div>
-
               {mode === 'password' && (
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Password</label>
-                  <input name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
-                </div>
+                <form action="/auth/login" method="POST">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Email</label>
+                      <input name="email" type="email" defaultValue={email} placeholder="you@restaurant.com" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Password</label>
+                      <input name="password" type="password" defaultValue={password} placeholder="Enter password" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                    </div>
+                    {error && (
+                      <div className="text-xs text-rose-400 bg-rose-500/10 rounded-xl p-3 border border-rose-500/20">{error}</div>
+                    )}
+                    <button type="submit" className="w-full rounded-xl bg-gradient-to-r from-purple-600 via-purple-500 to-rose-500 py-3 text-xs font-bold text-white shadow-lg hover:brightness-110 transition">
+                      Sign In
+                    </button>
+                  </div>
+                </form>
               )}
 
-              {error && (
-                <div className="text-xs text-rose-400 bg-rose-500/10 rounded-xl p-3 border border-rose-500/20">
-                  {error}
-                </div>
+              {mode === 'magic' && (
+                <form onSubmit={handleMagicLink}>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Email</label>
+                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@restaurant.com" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors" required />
+                    </div>
+                    {error && (
+                      <div className="text-xs text-rose-400 bg-rose-500/10 rounded-xl p-3 border border-rose-500/20">{error}</div>
+                    )}
+                    <button type="submit" disabled={loading} className="w-full rounded-xl bg-gradient-to-r from-purple-600 via-purple-500 to-rose-500 py-3 text-xs font-bold text-white shadow-lg hover:brightness-110 transition disabled:opacity-50">
+                      {loading ? 'Sending...' : 'Send Magic Link'}
+                    </button>
+                  </div>
+                </form>
               )}
-
-              <button type="submit" disabled={loading} className="w-full rounded-xl bg-gradient-to-r from-purple-600 via-purple-500 to-rose-500 py-3 text-xs font-bold text-white shadow-lg hover:brightness-110 transition disabled:opacity-50">
-                {loading ? 'Signing in...' : mode === 'magic' ? 'Send Magic Link' : 'Sign In'}
-              </button>
 
               <div className="relative my-4">
                 <div className="absolute inset-0 flex items-center">
@@ -121,7 +122,7 @@ export default function LoginPage() {
                 </svg>
                 <span>Google</span>
               </button>
-            </form>
+            </div>
           )}
         </div>
       </div>
