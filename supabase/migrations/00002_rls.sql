@@ -119,7 +119,7 @@ create policy "Order items viewable by order owners and staff"
   );
 
 create policy "Order items insertable by customers"
-  on order_items for insert with true;
+  on order_items for insert with check (true);
 
 create policy "Chefs can update order item status"
   on order_items for update using (
