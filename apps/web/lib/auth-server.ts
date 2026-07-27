@@ -1,12 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-function createServiceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { createServiceClient } from './supabase/service';
 
 export async function verifyPassword(email: string, password: string) {
   const supabase = createServiceClient();

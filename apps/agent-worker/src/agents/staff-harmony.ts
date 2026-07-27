@@ -16,7 +16,7 @@ function heuristicPropose(state: TwinState): { logs: AgentLog[]; tasks: StaffTas
       description: `Table ${dirtyTables[0].id} in ${dirtyTables[0].zone} area has been dirty and needs resetting for next seating`,
       urgency: 'attention',
       target_table_id: dirtyTables[0].id,
-      target_station_id: '',
+      target_station_id: undefined,
       status: 'pending',
       created_at: timestamp,
     };

@@ -36,7 +36,7 @@ function heuristicPropose(state: TwinState): AgentLog[] {
       proposal: {
         action: 'Promote comfort food and warm dishes',
         reason: `${state.weather.condition} weather increases comfort food demand by estimated 22%`,
-        suggested_boost: 'Mushroom Risotto + Risotto',
+        suggested_boost: 'Mushroom Risotto',
       },
       utility_score: 7.8,
       status: 'proposed',

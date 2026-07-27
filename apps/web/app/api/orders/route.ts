@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '../../../lib/supabase/server';
+import { createServiceClient } from '../../../lib/supabase/service';
 
 export async function GET() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServiceClient();
 
   const { data: orders, error } = await supabase
     .from('orders')
@@ -18,12 +18,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServiceClient();
   const body = await request.json();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const {
     table_id,
@@ -40,7 +36,7 @@ export async function POST(request: Request) {
     .from('orders')
     .insert({
       table_id: table_id || null,
-      customer_id: user?.id || null,
+      customer_id: null,
       status: 'pending',
       type,
       notes,

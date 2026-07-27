@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '../../../../lib/supabase/server';
+import { createServiceClient } from '../../../../lib/supabase/service';
 
 export async function GET() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServiceClient();
 
   const { data: tasks, error } = await supabase
     .from('staff_tasks')
@@ -18,7 +18,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServiceClient();
   const body = await request.json();
   const { id, status } = body;
 

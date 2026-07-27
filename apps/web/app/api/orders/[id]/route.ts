@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '../../../../lib/supabase/server';
+import { createServiceClient } from '../../../../lib/supabase/service';
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServiceClient();
 
   const { data: order, error } = await supabase
     .from('orders')

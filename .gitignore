@@ -10,3 +10,4 @@ ROADMAP.md
 *.tsbuildinfo
 memory/
 .vercel
+deck/
