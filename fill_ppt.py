@@ -160,9 +160,40 @@ def create_icon_box(slide, left, top, width, height, icon_char, label, fill_colo
 # ══════════════════════════════════════════════════════════════════════════════
 # SLIDE 2: Current Problem
 # ══════════════════════════════════════════════════════════════════════════════
-def clear_slide(slide):
-    """Remove all shapes from a slide."""
+def clear_slide(slide, keep_logos=True):
+    """Remove all shapes from a slide, optionally preserving logo images."""
+    if not keep_logos:
+        for shape in list(slide.shapes):
+            sp = shape._element
+            sp.getparent().remove(sp)
+        return
+    
+    # Identify logo shapes to preserve:
+    # - Top-left logo: pos ~(0.05, 0.00), size ~(1.62, 1.16)
+    # - Top-right logo: pos ~(12.33, 0.00), size ~(1.00, 1.08)
+    # - Center background: pos ~(4.08, 1.78), size ~(4.35, 4.78)
+    # - Slide 1 has different positions
+    logo_positions = []
+    for shape in slide.shapes:
+        if shape.shape_type == 13:  # Picture type
+            left_in = shape.left / 914400
+            top_in = shape.top / 914400
+            w_in = shape.width / 914400
+            h_in = shape.height / 914400
+            
+            # Top-left logo (small, near origin)
+            if left_in < 0.3 and top_in < 0.3 and w_in > 1.0:
+                logo_positions.append(shape)
+            # Top-right logo
+            elif left_in > 11.0 and top_in < 0.3 and w_in > 0.5:
+                logo_positions.append(shape)
+            # Center background graphic
+            elif 3.5 < left_in < 5.0 and 1.0 < top_in < 3.0 and w_in > 3.0:
+                logo_positions.append(shape)
+    
     for shape in list(slide.shapes):
+        if shape in logo_positions:
+            continue  # Skip logo shapes
         sp = shape._element
         sp.getparent().remove(sp)
 
