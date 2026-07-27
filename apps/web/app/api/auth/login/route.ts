@@ -8,20 +8,20 @@ export async function POST(request: NextRequest) {
     const password = formData.get('password') as string;
 
     if (!email || !password) {
-      return NextResponse.redirect(new URL('/auth/login?error=missing_fields', request.url));
+      return NextResponse.redirect(new URL('/auth/login?error=missing_fields', request.url), { status: 303 });
     }
 
     const { user, error } = await verifyPassword(email, password);
     if (error || !user) {
-      return NextResponse.redirect(new URL(`/auth/login?error=${encodeURIComponent(error ?? 'Invalid credentials')}`, request.url));
+      return NextResponse.redirect(new URL(`/auth/login?error=${encodeURIComponent(error ?? 'Invalid credentials')}`, request.url), { status: 303 });
     }
 
     const { token, error: sessionError } = await createSession(user.user_id);
     if (sessionError || !token) {
-      return NextResponse.redirect(new URL('/auth/login?error=session_error', request.url));
+      return NextResponse.redirect(new URL('/auth/login?error=session_error', request.url), { status: 303 });
     }
 
-    const response = NextResponse.redirect(new URL('/dashboard', request.url));
+    const response = NextResponse.redirect(new URL('/dashboard', request.url), { status: 303 });
     response.cookies.set('session_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -31,6 +31,6 @@ export async function POST(request: NextRequest) {
     });
     return response;
   } catch {
-    return NextResponse.redirect(new URL('/auth/login?error=server_error', request.url));
+    return NextResponse.redirect(new URL('/auth/login?error=server_error', request.url), { status: 303 });
   }
 }
