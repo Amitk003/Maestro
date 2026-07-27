@@ -19,15 +19,18 @@ create index if not exists idx_staff_tasks_urgency on staff_tasks(urgency desc);
 
 alter table if exists staff_tasks enable row level security;
 
-create policy if not exists "Staff tasks viewable by staff"
+drop policy if exists "Staff tasks viewable by staff" on staff_tasks;
+create policy "Staff tasks viewable by staff"
   on staff_tasks for select using (
     get_user_role() in ('waiter', 'chef', 'manager', 'owner')
   );
 
-create policy if not exists "Staff tasks insertable by system"
+drop policy if exists "Staff tasks insertable by system" on staff_tasks;
+create policy "Staff tasks insertable by system"
   on staff_tasks for insert with check (true);
 
-create policy if not exists "Staff can update own tasks"
+drop policy if exists "Staff can update own tasks" on staff_tasks;
+create policy "Staff can update own tasks"
   on staff_tasks for update using (
     assigned_to = auth.uid()
     or get_user_role() in ('manager', 'owner')
