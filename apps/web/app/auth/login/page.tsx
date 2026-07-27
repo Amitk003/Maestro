@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { signInWithOtp, signInWithPassword, signInWithGoogle } from '../../../lib/auth';
+import { useRouter } from 'next/navigation';
+import { signInWithOtp, signInWithGoogle } from '../../../lib/auth';
 import { PageTransition } from '../../../components/ui/PageTransition';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [mode, setMode] = useState<'magic' | 'password'>('password');
   const [email, setEmail] = useState('test@maestro.demo');
   const [password, setPassword] = useState('password123');
@@ -31,11 +33,20 @@ export default function LoginPage() {
     if (!email.trim() || !password.trim()) return;
     setLoading(true);
     setError(null);
-    const { error: err } = await signInWithPassword(email, password);
-    if (err) {
-      setError(err.message);
-    } else {
-      window.location.href = '/dashboard';
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
+      } else {
+        router.push('/dashboard');
+      }
+    } catch {
+      setError('Network error');
     }
     setLoading(false);
   };
